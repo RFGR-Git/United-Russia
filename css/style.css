@@ -1,0 +1,41 @@
+body {
+    font-family: 'Inter', sans-serif; /* Default body font */
+    background-color: #FFFFFF; /* True White */
+    color: #3C3C3B; /* Charcoal Gray */
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Oswald', sans-serif; /* Headings font */
+    text-transform: uppercase;
+}
+/* Custom styles for map tooltip */
+.map-tooltip {
+    position: absolute;
+    background-color: black;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.875rem; /* text-sm */
+    z-index: 1000;
+    pointer-events: none; /* Allows mouse events to pass through to the map */
+    display: none; /* Hidden by default, shown on hover */
+}
+/* Ensure the map container takes up available space */
+#map-container-parent {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+#map-svg-container {
+    flex-grow: 1; /* Allows the map to take available vertical space */
+    width: 100%;
+    height: 100%;
+    display: flex; /* Use flex to center SVG if it doesn't fill */
+    justify-content: center;
+    align-items: center;
+}
+#map-svg-container svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
