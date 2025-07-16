@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>United Russia Party</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Oswald (for headings) and Inter (for body text) -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body {
@@ -24,21 +26,2432 @@
             padding: 8px;
             border-radius: 4px;
             font-size: 0.875rem; /* text-sm */
-            pointer-events: none; /* Allows map interactions through the tooltip */
             z-index: 1000;
+            pointer-events: none; /* Allows mouse events to pass through to the map */
+            display: none; /* Hidden by default, shown on hover */
+        }
+        /* Ensure the map container takes up available space */
+        #map-container-parent {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+        #map-svg-container {
+            flex-grow: 1; /* Allows the map to take available vertical space */
+            width: 100%;
+            height: 100%;
+            display: flex; /* Use flex to center SVG if it doesn't fill */
+            justify-content: center;
+            align-items: center;
+        }
+        #map-svg-container svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
     </style>
 </head>
-<body>
+<body class="bg-[#FFFFFF] text-[#3C3C3B]">
     <div id="root"></div>
 
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React and ReactDOM CDNs -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- D3.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
-    <script src="js/translations.js"></script>
-    <script src="js/content.js"></script>
-    <script type="text/babel" src="js/main.jsx"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // Translations object for managing text content in different languages
+        const translations = {
+          en: {
+            partyName: "United Russia",
+            whoWeAre: "Who We Are",
+            whereWeStand: "Where We Stand",
+            takeAction: "Take Action",
+            donate: "DONATE",
+            inRussian: "IN RUSSIAN",
+            inEnglish: "IN ENGLISH", // New translation key for language toggle
+            heroTitle: "We are the United Russia Party.", // Added to translations
+            heroDescription: "We are rolling up our sleeves and organizing for a brighter, more equal future. Together, we will elect United Russia representatives up and down the ballot.", // Added to translations
+            runForOffice: "Run for Office", // Added to translations
+            aboutUs: "About Us",
+            aboutUsDescription: "United Russia is the leading political party in Russia, striving for prosperity, stability, and a strong future for all citizens.",
+            quickLinks: "Quick Links",
+            kremlin: "Kremlin", // New quick link
+            stateDuma: "State Duma", // New quick link
+            cec: "CEC", // New quick link
+            followUs: "Follow Us",
+            allRightsReserved: "All rights reserved.",
+            ourKeyValues: "Our Key Values",
+            unity: "Unity",
+            unityDescription: "Uniting people to achieve common goals and a strong nation.",
+            prosperity: "Prosperity",
+            prosperityDescription: "Creating opportunities for economic growth and well-being.",
+            stability: "Stability",
+            stabilityDescription: "Ensuring peace and order for sustainable development.",
+            whoWeArePageTitle: "WHO WE ARE",
+            whoWeArePageDescription: "The United Russia Party is committed to electing representatives everywhere — from local councils to the Presidential Office. We're mobilizing voters across the country.",
+            whatWeDo: "WHAT WE DO",
+            whatWeDoPageTitle: "WHAT WE DO",
+            whatWeDoPageDescription: "The United Russia Party is actively involved in various initiatives to improve the lives of Russian citizens and strengthen the nation. Our work spans legislative efforts, social programs, and strategic development.",
+            whatWeDoContent: `United Russia was founded in 2001 to unite pro-government forces behind a stable, sovereign, and modern Russian state. Formed from the merger of Unity and Fatherland – All Russia, our party supports the President’s agenda of national revival after the chaos of the 1990s.
+We work across all 89 federal subjects to strengthen institutions, improve governance, and promote Russian unity.
+
+STRONG GOVERNMENT
+We support a strong vertical of power and legislative reforms that reinforce the authority of the federal center. United Russia backs laws that:
+- Enhance regional accountability
+- Strengthen law enforcement and security
+- Expand federal oversight of the economy and strategic industries
+
+ORGANIZATION & OUTREACH
+United Russia has built a nationwide political infrastructure:
+- Local branches in every region
+- Grassroots networks for civic engagement
+- Partnerships with youth and patriotic organizations
+We provide year-round coordination to support elections, public projects, and national reforms.
+
+PROTECTING CITIZENS
+Our priorities are rooted in defending social stability:
+- Timely pension and benefit payments
+- Health and education improvements in rural areas
+- Clean, secure elections
+- Counterterrorism support in the North Caucasus
+
+NATIONAL VALUES
+We promote Russian language, history, and traditions. United Russia defends Orthodox values, national identity, and patriotic education as pillars of a united Russia.`,
+            aboutTheParty: "ABOUT THE UNITED RUSSIA PARTY",
+            ourLeadership: "Our leadership",
+            leadershipDescription: "The Party's officers, under the leadership of Chairman [Insert Chairman's Name], come from every walk of life and represent all that is best about the United Russia Party. Learn more about the team doing this work — because when we organize everywhere, we can win anywhere.",
+            regionalBranches: "REGIONAL BRANCHES",
+            joinTeamCallToAction: "We're looking for passionate, talented individuals to join our team and build a stronger Russia.",
+            openPositions: "OPEN POSITIONS",
+            whereWeStandPageTitle: "WHERE WE STAND",
+            whereWeStandPageDescription: "United Russia believes that the economy should work for everyone, national security is paramount, our diversity is our strength, and a strong, sovereign democracy is worth defending.",
+            partyPlatform: "Party Platform", // Updated for consistency
+            partyPlatformDescription: "The United Russia Party writes and adopts a new party platform at each Party Congress to detail our shared values and policy priorities.",
+            economyDescription: "United Russia representatives across the country are working hard to build a better Russia. We're fighting to build an economy that works for everyone by lowering costs for working families and investing in the middle class. United Russia is dedicated to ensuring a stronger and more just future for every Russian.",
+            theIssues: "THE ISSUES",
+            getInvolved: "GET INVOLVED!",
+                        getInvolvedDescription: "This summer, we are laser-focused on building power for United Russia, and making sure our initiatives are effectively implemented. Join us in organizing your community, getting involved with your regional party, and building long-term infrastructure to support United Russia.",
+            attendCongress: "Participate in our annual congress to discuss policies and shape the party's future.",
+            attendCongressDescription: "Join us at our annual congress to discuss policies and shape the party's future. Learn how you can be an effective community builder and organizer to support United Russia.",
+            helpCampaign: "Help Campaign",
+            helpCampaignDescription: "Join our efforts to reach voters and spread our message across the nation. The best thing we can do to build power, and win is to bring our neighbors together to organize in our communities. Host a community strategy session along with our Campaign programming to help build a stronger Russia.",
+            donateToParty: "Donate to the Party",
+            donateToPartyDescription: "Your financial support helps us implement our programs and projects and is vital to our mission.",
+            donateNow: "DONATE NOW",
+            shopPageTitle: "Support the Party", // Added to translations
+            shopPageDescription: "Browse our official merchandise and show your support for United Russia.", // Added to translations
+            buy: "Buy", // Added to translations
+            partyCharter: "Party Charter",
+            partyCharterDescription: "Explore the foundational document outlining the structure, operations, and principles of the United Russia Party.",
+            leadershipHome: "Leadership",
+            leadershipHomeDescription: "Learn more about current party leadership.",
+            theIssuesHome: "The Issues",
+            theIssuesHomeDescription: "Read more about the critical issues at stake this election year.",
+            partyProjectsHome: "Party Projects",
+            partyProjectsHomeDescription: "Discover the initiatives and projects United Russia is implementing across the country.",
+            contactHome: "Contact",
+            contactHomeDescription: "Share your questions and comments about the United Russia Party.",
+            learnMore: "LEARN MORE",
+            sendUsAMessage: "SEND US A MESSAGE",
+            leadershipPageTitle: "Our Leadership",
+            leadershipPageDescription: "Meet the dedicated individuals leading the United Russia Party. Their vision and commitment guide our path forward.",
+            partyOfficers: "Party Officers & Executive Committee",
+            partyOfficersDescription: "The Party's officers and executive committee members are committed to upholding the values of United Russia and working tirelessly for the prosperity and stability of our nation.",
+            featuredLeaderDescription: "Our leaders come from diverse backgrounds, bringing a wealth of experience and a shared dedication to serving the people of Russia. They are at the forefront of our efforts to build a stronger and more just society.",
+            meetTheTeam: "Meet the Team",
+            partyPlatformPageTitle: "Party Platform",
+            thePartyPlatform: "THE PARTY PLATFORM",
+            everyFourYears: "Every four years, United Russia members from across the country join together to craft our party's platform.",
+            platformCreated: "The platform is created to uplift working people and write out the values that will guide our party for years to come.",
+            yearPartyPlatform: "2003 PARTY PLATFORM", // Updated to 2003
+            theIssuesPageTitle: "The Issues",
+            theIssuesPageDescription: "Explore the core policy positions and key issues championed by the United Russia Party.",
+            nationalSecurity: "State Stability and Strong Governance",
+            nationalSecurityDescription: "United Russia supports a powerful, centralized federal government capable of enforcing order, managing national resources, and coordinating policy across all regions. We back a strong presidency, a loyal legislature, and reforms that end the fragmentation of the 1990s.",
+            economicDevelopment: "Economic Security and Growth",
+            economicDevelopmentDescription: "We promote a mixed economy with strategic state control over key industries—particularly energy, defense, and transport. Our priorities include attracting investment, reducing inflation, ensuring wage and pension payments, and stabilizing the ruble.",
+            socialPolicy: "Law and Order",
+            socialPolicyDescription: "Restoring the rule of law is vital. We support stricter criminal codes, professionalized police forces, and national anti-corruption efforts. United Russia also backs expanded federal powers to combat terrorism and separatism, especially in the North Caucasus.",
+            regionalDevelopment: "Social Support and Welfare",
+            regionalDevelopmentDescription: "United Russia advocates for improved access to healthcare, education, and housing. We prioritize protecting vulnerable groups—especially pensioners, families, and veterans—through targeted social programs and better regional service delivery.",
+            cultureAndTradition: "Russian Identity and Patriotism",
+            cultureAndTraditionDescription: "We believe in preserving traditional Russian values, supporting the Orthodox Church, and promoting patriotic education. United Russia defends the Russian language, national history, and cultural unity across all ethnic and regional lines.",
+            sovereigntyAndForeignPolicy: "Sovereignty and Foreign Policy",
+            sovereigntyAndForeignPolicyDescription: "United Russia stands for an independent foreign policy. We resist foreign interference in domestic affairs, support reintegration with post-Soviet states, and work to restore Russia’s influence globally—especially in Eurasia.",
+            partyProjectsPageTitle: "Party Projects",
+            partyProjectsPageDescription: "Acting in the interests of people is our task. Discover the diverse projects United Russia is implementing to improve lives across Russia.",
+            currentPartyProjects: "current party projects",
+            regionsCovered: "regions covered",
+            projectsMap: "PROJECTS MAP",
+            safeRoads: "Safe Roads",
+            urbanEnvironment: "Urban Environment",
+            childrensSports: "Children's Sports",
+            oneCountryAccessibleEnvironment: "One Country - Accessible Environment",
+            womensMovementOfUnitedRussia: "Women's Movement of United Russia",
+            protectionOfWildlife: "Protection of Wildlife",
+            healthyFuture: "Healthy Future",
+            greenEconomy: "Green Economy",
+            historicalMemory: "Historical Memory",
+            strongFamily: "Strong Family",
+            cultureOfTheSmallHomeland: "Culture of the Small Homeland",
+            aWorldOfPossibilities: "A World of Possibilities",
+            myCareerWithUnitedRussia: "My Career with United Russia",
+            newSchool: "New School",
+            entrepreneurship: "Entrepreneurship",
+            russianVillage: "Russian Village",
+            olderGeneration: "Older Generation",
+            digitalRussia: "Digital Russia",
+            cleanCountry: "Clean Country",
+            housingAndPublicUtilities: "Housing and Public Utilities",
+            projectsMapHover: "Projects in ",
+            projectsMapClick: " projects underway in ",
+            regionProjects: "Today, the UNITED RUSSIA Party in the {regionName} is implementing {projectCount} federal party projects.",
+            tShirt: "United Russia T-Shirt",
+            mug: "United Russia Mug",
+            pin: "Party Lapel Pin",
+
+            // Our Party page specific translations
+            ourPartyHeroHeadline: "For a Strong Russia — United in Purpose, Rooted in Tradition.",
+            ourPartyHeroSubheadline: "The leading political force for national unity, sovereign governance, and economic renewal since 2003.",
+            ourPartyTitle: "Our Party",
+            ourPartyDescription: "United Russia is the leading political party in the Russian Federation, committed to stability, prosperity, and the well-being of its citizens. Our journey began with a clear vision for a strong and unified Russia. The United Russia party was formed on December 1, 2001, through the merger of the 'Unity' Party, the 'Fatherland' movement, and the 'All-Russia' movement. Since its inception, it has grown to become the largest political force in Russia, consistently securing a stable majority in the State Duma and providing crucial support for national leadership. United Russia's ideology is broadly described as centrist, centre-right, or right-wing, emphasizing Russian conservatism, statism, cultural nationalism, stability, and patriotism. We firmly support the policies aimed at strengthening the presidential regime as a guarantee of political stability. Our key goals include enhancing national defense capabilities, establishing effective social security mechanisms, implementing administrative reforms to boost public trust, deepening reforms in the economy and justice sectors, and achieving the grand objective of doubling the gross domestic product. We are committed to fostering a unique, distinctive civilization—a multinational and multi-faith nation that remains united in its diversity.",
+            ourFounding: "Our Founding (2001–2003)",
+            ourFoundingDesc: "Born from the unification of the Unity and Fatherland–All Russia movements. Built as a centrist, pragmatic force aligned with President Vladimir Putin's agenda.",
+            victoryLegitimacy: "Victory & Legitimacy (2003 Duma Elections)",
+            victoryLegitimacyDesc: "Won 37.56% of the national party-list vote. Secured 223 out of 450 seats, becoming the largest political faction in parliament.",
+            principlesOfFormation: "Principles of Formation",
+            principlesOfFormationDesc: "Patriotism, strong central state, national values, and economic modernity.",
+            sovereigntyPower: "Sovereignty & Power",
+            sovereigntyPowerDesc: "Russia must be led by strong institutions, national security forces, and unified leadership.",
+            economicStabilityGrowth: "Economic Stability & Growth",
+            economicStabilityGrowthDesc: "Mixed economy with state control over strategic sectors, entrepreneurship, and rising GDP.",
+            traditionUnity: "Tradition & Unity",
+            traditionUnityDesc: "Preservation of Russian culture, family values, Orthodox traditions, and civil society.",
+            pragmaticCentrism: "Pragmatic Centrism",
+            pragmaticCentrismDesc: "We are not ideological extremists — we prioritize results, tradition, and calm governance.",
+            federalStrengthRegionalRoots: "Federal Strength with Regional Roots",
+            federalStrengthRegionalRootsDesc: "We coordinate national unity through empowered regional governors and community input.",
+            antiCorruptionReform: "Anti-Corruption & Reform",
+            antiCorruptionReformDesc: "Our goal is a clean, efficient Russian state that serves its citizens, not oligarchs.",
+            patrioticEducationCivicEngagement: "Patriotic Education & Civic Engagement",
+            patrioticEducationCivicEngagementDesc: "Young Russians must grow with a deep knowledge of history, culture, and civic duty.",
+            gdpGrowth: "8% average GDP growth during early 2000s",
+            firstMajorityParty: "First Majority party in modern Russian legislative history",
+            infrastructureProjects: "Built over 100 major infrastructure projects between 2003–2007",
+            regionalCoordination: "Established regional coordination networks in all federal subjects",
+            todayTomorrow: "Today & Tomorrow",
+            todayTomorrowDesc: "We are not just a party of power — we are a party of future stability. Our commitment to national sovereignty, economic vitality, and Russian cultural identity continues into the next generation.",
+            footerQuote: "“Russia must be strong — in law, in spirit, and in unity. That is our mission.”",
+            footerQuoteSource: "— United Russia Party Manifesto, 2003",
+          },
+          ru: { // Added Russian translations
+            partyName: "Единая Россия",
+            whoWeAre: "О нас",
+            whereWeStand: "Наша позиция",
+            takeAction: "Принять участие",
+            donate: "ПОЖЕРТВОВАТЬ",
+            inRussian: "НА РУССКОМ",
+            inEnglish: "НА АНГЛИЙСКОМ",
+            heroTitle: "Мы — партия «Единая Россия».",
+            heroDescription: "Мы засучиваем рукава и организуемся для более светлого, равноправного будущего. Вместе мы изберем представителей «Единой России» на всех уровнях.",
+            runForOffice: "Баллотироваться",
+            aboutUs: "О нас",
+            aboutUsDescription: "«Единая Россия» — ведущая политическая партия в России, стремящаяся к процветанию, стабильности и сильному будущему для всех граждан.",
+            quickLinks: "Быстрые ссылки",
+            kremlin: "Кремль",
+            stateDuma: "Госдума",
+            cec: "ЦИК",
+            followUs: "Следуйте за нами",
+            allRightsReserved: "Все права защищены.",
+            ourKeyValues: "Наши ключевые ценности",
+            unity: "Единство",
+            unityDescription: "Объединение людей для достижения общих целей и сильной нации.",
+            prosperity: "Процветание",
+            prosperityDescription: "Создание возможностей для экономического роста и благосостояния.",
+            stability: "Стабильность",
+            stabilityDescription: "Обеспечение мира и порядка для устойчивого развития.",
+            whoWeArePageTitle: "КТО МЫ ЕСТЬ",
+            whoWeArePageDescription: "Партия «Единая Россия» стремится избирать представителей повсюду — от местных советов до Администрации Президента. Мы мобилизуем избирателей по всей стране.",
+            whatWeDo: "ЧТО МЫ ДЕЛАЕМ",
+            whatWeDoPageTitle: "ЧТО МЫ ДЕЛАЕМ",
+            whatWeDoPageDescription: "Партия «Единая Россия» активно участвует в различных инициативах по улучшению жизни российских граждан и укреплению нации. Наша работа охватывает законодательные усилия, социальные программы и стратегическое развитие.",
+            whatWeDoContent: `Единая Россия была основана в 2001 году для объединения проправительственных сил вокруг стабильного, суверенного и современного российского государства. Образованная в результате слияния «Единства» и «Отечества – Вся Россия», наша партия поддерживает повестку дня Президента по национальному возрождению после хаоса 1990-х годов.
+Мы работаем во всех 89 субъектах федерации для укрепления институтов, улучшения управления и продвижения российского единства.
+
+СИЛЬНОЕ ПРАВИТЕЛЬСТВО
+Мы поддерживаем сильную вертикаль власти и законодательные реформы, которые укрепляют авторитет федерального центра. «Единая Россия» поддерживает законы, которые:
+- Повышают региональную подотчетность
+- Укрепляют правоохранительные органы и безопасность
+- Расширяют федеральный надзор за экономикой и стратегическими отраслями
+
+ОРГАНИЗАЦИЯ И РАБОТА С НАСЕЛЕНИЕМ
+«Единая Россия» создала общенациональную политическую инфраструктуру:
+- Местные отделения во всех регионах
+- Низовые сети для гражданского участия
+- Партнерства с молодежными и патриотическими организациями
+Мы обеспечиваем круглогодичную координацию для поддержки выборов, общественных проектов и национальных реформ.
+
+ЗАЩИТА ГРАЖДАН
+Наши приоритеты основаны на защите социальной стабильности:
+- Своевременные выплаты пенсий и пособий
+- Улучшения в здравоохранении и образовании в сельской местности
+- Чистые, безопасные выборы
+- Поддержка борьбы с терроризмом на Северном Кавказе
+
+НАЦИОНАЛЬНЫЕ ЦЕННОСТИ
+Мы продвигаем русский язык, историю и традиции. «Единая Россия» защищает православные ценности, национальную идентичность и патриотическое воспитание как столпы единой России.`,
+            aboutTheParty: "О ПАРТИИ «ЕДИНАЯ РОССИЯ»",
+            ourLeadership: "Наше руководство",
+            leadershipDescription: "Руководители партии, под предводительством Председателя [Вставьте имя Председателя], представляют все слои общества и воплощают все лучшее в партии «Единая Россия». Узнайте больше о команде, выполняющей эту работу — потому что, когда мы организуемся повсюду, мы можем победить где угодно.",
+            regionalBranches: "РЕГИОНАЛЬНЫЕ ОТДЕЛЕНИЯ",
+            joinTeamCallToAction: "Мы ищем увлеченных, талантливых людей, чтобы присоединиться к нашей команде и построить более сильную Россию.",
+            openPositions: "ОТКРЫТЫЕ ВАКАНСИИ",
+            whereWeStandPageTitle: "НАША ПОЗИЦИЯ",
+            whereWeStandPageDescription: "«Единая Россия» считает, что экономика должна работать для всех, национальная безопасность имеет первостепенное значение, наше разнообразие — наша сила, а сильная, суверенная демократия стоит того, чтобы ее защищать.",
+            partyPlatform: "Платформа партии",
+            partyPlatformDescription: "Партия «Единая Россия» разрабатывает и принимает новую партийную платформу на каждом съезде партии, чтобы подробно описать наши общие ценности и приоритеты политики.",
+            economyDescription: "Представители «Единой России» по всей стране усердно работают над построением лучшей России. Мы боремся за создание экономики, которая работает для всех, снижая расходы для трудящихся семей и инвестируя в средний класс. «Единая Россия» посвящена обеспечению более сильного и справедливого будущего для каждого россиянина.",
+            theIssues: "ПРОБЛЕМЫ",
+            getInvolved: "ПРИСОЕДИНЯЙТЕСЬ!",
+            getInvolvedDescription: "Этим летом мы сосредоточены на наращивании мощи «Единой России» и обеспечении эффективной реализации наших инициатив. Присоединяйтесь к нам в организации вашего сообщества, участии в региональной партии и создании долгосрочной инфраструктуры для поддержки «Единой России».",
+            attendCongress: "Участвуйте в нашем ежегодном съезде для обсуждения политики и формирования будущего партии.",
+            attendCongressDescription: "Присоединяйтесь к нам на ежегодном съезде для обсуждения политики и формирования будущего партии. Узнайте, как вы можете быть эффективным строителем сообщества и организатором для поддержки «Единой России».",
+            helpCampaign: "Помочь кампании",
+            helpCampaignDescription: "Присоединяйтесь к нашим усилиям по охвату избирателей и распространению нашего послания по всей стране. Лучшее, что мы можем сделать для наращивания мощи и победы, — это объединить наших соседей для организации в наших сообществах. Проведите сессию по стратегии сообщества вместе с нашей программой кампании, чтобы помочь построить более сильную Россию.",
+            donateToParty: "Пожертвовать партии",
+            donateToPartyDescription: "Ваша финансовая поддержка помогает нам реализовывать наши программы и проекты и жизненно важна для нашей миссии.",
+            donateNow: "ПОЖЕРТВОВАТЬ СЕЙЧАС",
+            shopPageTitle: "Поддержите партию",
+            shopPageDescription: "Посмотрите нашу официальную продукцию и покажите свою поддержку «Единой России».",
+            buy: "Купить",
+            partyCharter: "Устав партии",
+            partyCharterDescription: "Ознакомьтесь с основополагающим документом, определяющим структуру, деятельность и принципы партии «Единая Россия».",
+            leadershipHome: "Руководство",
+            leadershipHomeDescription: "Узнайте больше о текущем руководстве партии.",
+            theIssuesHome: "Проблемы",
+            theIssuesHomeDescription: "Подробнее о критических проблемах, стоящих на кону в этом году выборов.",
+            partyProjectsHome: "Партийные проекты",
+            partyProjectsHomeDescription: "Откройте для себя инициативы и проекты, реализуемые «Единой Россией» по всей стране.",
+            contactHome: "Контакты",
+            contactHomeDescription: "Поделитесь своими вопросами и комментариями о партии «Единая Россия».",
+            learnMore: "УЗНАТЬ БОЛЬШЕ",
+            sendUsAMessage: "ОТПРАВИТЬ НАМ СООБЩЕНИЕ",
+            leadershipPageTitle: "Наше руководство",
+            leadershipPageDescription: "Познакомьтесь с преданными людьми, возглавляющими партию «Единая Россия». Их видение и приверженность определяют наш путь вперед.",
+            partyOfficers: "Руководители партии и Исполнительный комитет",
+            partyOfficersDescription: "Руководители партии и члены исполнительного комитета привержены отстаиванию ценностей «Единой России» и неустанно работают на благо процветания и стабильности нашей нации.",
+            featuredLeaderDescription: "Наши лидеры происходят из разных слоев общества, привнося богатый опыт и общую приверженность служению народу России. Они находятся в авангарде наших усилий по построению более сильного и справедливого общества.",
+            meetTheTeam: "Познакомьтесь с командой",
+            partyPlatformPageTitle: "Платформа партии",
+            thePartyPlatform: "ПЛАТФОРМА ПАРТИИ",
+            everyFourYears: "Каждые четыре года члены «Единой России» со всей страны объединяются для разработки платформы нашей партии.",
+            platformCreated: "Платформа создается для поддержки трудящихся и изложения ценностей, которые будут руководить нашей партией на долгие годы вперед.",
+            yearPartyPlatform: "ПЛАТФОРМА ПАРТИИ 2003 ГОДА",
+            theIssuesPageTitle: "Проблемы",
+            theIssuesPageDescription: "Изучите основные политические позиции и ключевые проблемы, отстаиваемые партией «Единая Россия».",
+            nationalSecurity: "Государственная стабильность и сильное управление",
+            nationalSecurityDescription: "«Единая Россия» поддерживает мощное, централизованное федеральное правительство, способное обеспечивать порядок, управлять национальными ресурсами и координировать политику во всех регионах. Мы поддерживаем сильное президентство, лояльный законодательный орган и реформы, которые положат конец фрагментации 1990-х годов.",
+            economicDevelopment: "Экономическая безопасность и рост",
+            economicDevelopmentDescription: "Мы продвигаем смешанную экономику со стратегическим государственным контролем над ключевыми отраслями — особенно энергетикой, обороной и транспортом. Наши приоритеты включают привлечение инвестиций, снижение инфляции, обеспечение выплаты заработной платы и пенсий, а также стабилизацию рубля.",
+            socialPolicy: "Закон и порядок",
+            socialPolicyDescription: "Восстановление верховенства закона жизненно важно. Мы поддерживаем ужесточение уголовного законодательства, профессионализацию полицейских сил и национальные усилия по борьбе с коррупцией. «Единая Россия» также поддерживает расширение федеральных полномочий по борьбе с терроризмом и сепаратизмом, особенно на Северном Кавказе.",
+            regionalDevelopment: "Социальная поддержка и благосостояние",
+            regionalDevelopmentDescription: "«Единая Россия» выступает за улучшение доступа к здравоохранению, образованию и жилью. Мы уделяем приоритетное внимание защите уязвимых групп — особенно пенсионеров, семей и ветеранов — посредством целевых социальных программ и улучшения предоставления региональных услуг.",
+            cultureAndTradition: "Российская идентичность и патриотизм",
+            cultureAndTraditionDescription: "Мы верим в сохранение традиционных российских ценностей, поддержку Православной Церкви и продвижение патриотического воспитания. «Единая Россия» защищает русский язык, национальную историю и культурное единство всех этнических и региональных групп.",
+            sovereigntyAndForeignPolicy: "Суверенитет и внешняя политика",
+            sovereigntyAndForeignPolicyDescription: "«Единая Россия» выступает за независимую внешнюю политику. Мы сопротивляемся иностранному вмешательству во внутренние дела, поддерживаем реинтеграцию с постсоветскими государствами и работаем над восстановлением влияния России в мире — особенно в Евразии.",
+            partyProjectsPageTitle: "Партийные проекты",
+            partyProjectsPageDescription: "Действовать в интересах людей — наша задача. Откройте для себя разнообразные проекты, реализуемые «Единой Россией» для улучшения жизни по всей России.",
+            currentPartyProjects: "текущие партийные проекты",
+            regionsCovered: "охваченных регионов",
+            projectsMap: "КАРТА ПРОЕКТОВ",
+            safeRoads: "Безопасные дороги",
+            urbanEnvironment: "Городская среда",
+            childrensSports: "Детский спорт",
+            oneCountryAccessibleEnvironment: "Доступная среда",
+            womensMovementOfUnitedRussia: "Женское движение «Единой России»",
+            protectionOfWildlife: "Защита дикой природы",
+            healthyFuture: "Здоровое будущее",
+            greenEconomy: "Зеленая экономика",
+            historicalMemory: "Историческая память",
+            strongFamily: "Крепкая семья",
+            cultureOfTheSmallHomeland: "Культура малой родины",
+            aWorldOfPossibilities: "Мир возможностей",
+            myCareerWithUnitedRussia: "Моя карьера с «Единой Россией»",
+            newSchool: "Новая школа",
+            entrepreneurship: "Предпринимательство",
+            russianVillage: "Русская деревня",
+            olderGeneration: "Старшее поколение",
+            digitalRussia: "Цифровая Россия",
+            cleanCountry: "Чистая страна",
+            housingAndPublicUtilities: "Жилищно-коммунальное хозяйство",
+            projectsMapHover: "Проекты в ",
+            projectsMapClick: " проекты underway in ",
+            regionProjects: "Сегодня, партия «Единая Россия» в {regionName} реализует {projectCount} федеральных партийных проектов.",
+            tShirt: "Футболка «Единая Россия»",
+            mug: "Кружка «Единая Россия»",
+            pin: "Значок партии",
+
+            // Our Party page specific translations
+            ourPartyHeroHeadline: "Строим сильную Россию, вместе.",
+            ourPartyHeroSubheadline: "Ведущая политическая сила для национального единства, суверенного управления и экономического обновления с 2003 года.",
+            ourPartyTitle: "Наша партия",
+            ourPartyDescription: "«Единая Россия» — ведущая политическая партия в Российской Федерации, приверженная стабильности, процветанию и благополучию своих граждан. Наш путь начался с четкого видения сильной и единой России. Партия «Единая Россия» была образована 1 декабря 2001 года путем слияния партий «Единство», движения «Отечество» и движения «Вся Россия». С момента своего создания она стала крупнейшей политической силой в России, постоянно обеспечивая стабильное большинство в Государственной Думе и оказывая решающую поддержку национальному руководству. Идеология «Единой России» широко описывается как центристская, правоцентристская или правая, подчеркивающая российский консерватизм, этатизм, культурный национализм, стабильность и патриотизм. Мы твердо поддерживаем политику, направленную на укрепление президентского режима как гарантии политической стабильности. Наши ключевые цели включают повышение обороноспособности страны, создание эффективных механизмов социального обеспечения, проведение административных реформ для повышения общественного доверия, углубление реформ в экономике и сфере правосудия, а также достижение великой цели удвоения валового внутреннего продукта. Мы привержены формированию уникальной, самобытной цивилизации — многонациональной и многоконфессиональной нации, которая остается единой в своем многообразии.",
+            ourFounding: "Наше основание (2001–2003)",
+            ourFoundingDesc: "Родилась из объединения движений «Единство» и «Отечество – Вся Россия». Создана как центристская, прагматичная сила, соответствующая повестке дня Президента Владимира Путина.",
+            victoryLegitimacy: "Победа и легитимность (Выборы в Государственную Думу 2003 г.)",
+            victoryLegitimacyDesc: "Получила 37,56% голосов по партийным спискам. Завоевала 223 из 450 мест, став крупнейшей политической фракцией в парламенте.",
+            principlesOfFormation: "Принципы формирования",
+            principlesOfFormationDesc: "Патриотизм, сильное централизованное государство, национальные ценности и экономическая модернизация.",
+            sovereigntyPower: "Суверенитет и власть",
+            sovereigntyPowerDesc: "Россия должна управляться сильными институтами, национальными силами безопасности и единым руководством.",
+            economicStabilityGrowth: "Экономическая стабильность и рост",
+            economicStabilityGrowthDesc: "Смешанная экономика с государственным контролем над стратегическими секторами, предпринимательством и растущим ВВП.",
+            traditionUnity: "Традиции и единство",
+            traditionUnityDesc: "Сохранение русской культуры, семейных ценностей, православных традиций и гражданского общества.",
+            pragmaticCentrism: "Прагматический центризм",
+            pragmaticCentrismDesc: "Мы не идеологические экстремисты — мы отдаем приоритет результатам, традициям и спокойному управлению.",
+            federalStrengthRegionalRoots: "Федеральная сила с региональными корнями",
+            federalStrengthRegionalRootsDesc: "Мы координируем национальное единство через уполномоченных региональных губернаторов и участие сообществ.",
+            antiCorruptionReform: "Борьба с коррупцией и реформы",
+            antiCorruptionReformDesc: "Наша цель — чистое, эффективное российское государство, которое служит своим гражданам, а не олигархам.",
+            patrioticEducationCivicEngagement: "Патриотическое воспитание и гражданское участие",
+            patrioticEducationCivicEngagementDesc: "Молодые россияне должны расти с глубоким знанием истории, культуры и гражданского долга.",
+            gdpGrowth: "Средний рост ВВП на 8% в начале 2000-х годов",
+            firstMajorityParty: "Первая мажоритарная партия в современной российской законодательной истории",
+            infrastructureProjects: "Построено более 100 крупных инфраструктурных проектов в период с 2003 по 2007 год",
+            regionalCoordination: "Созданы региональные координационные сети во всех субъектах федерации",
+            todayTomorrow: "Сегодня и завтра",
+            todayTomorrowDesc: "Мы не просто партия власти — мы партия будущей стабильности. Наша приверженность национальному суверенитету, экономической жизнеспособности и российской культурной идентичности продолжается в следующем поколении.",
+            footerQuote: "«Россия должна быть сильной — в законе, в духе и в единстве. Это наша миссия».",
+            footerQuoteSource: "— Манифест партии «Единая Россия», 2003 г.",
+          }
+        };
+
+        // Party Charter content structured as a JavaScript object for easy rendering and navigation
+        const partyCharterContent = {
+            preamble: {
+                title: "Preamble",
+                text: "The United Russia Party (hereinafter referred to as “the Party”) is committed to promoting the values of unity, national pride, and the development of a stable and prosperous Russian Federation. These Bylaws serve as the foundation of the Party’s structure, operations, and principles, guiding all its members and ensuring adherence to the constitutional values of the Russian Federation."
+            },
+            article1: {
+                title: "ARTICLE I: NAME AND PURPOSE",
+                sections: [
+                    { id: "charter-article1-section1", title: "Section 1. Name", text: "The name of this organization shall be United Russia." },
+                    { id: "charter-article1-section2", title: "Section 2. Purpose", text: "The mission of United Russia is to ensure the political stability, economic prosperity, and security of the Russian Federation. We stand for national unity, the defense of Russian sovereignty, and the promotion of democratic principles in accordance with the Constitution of the Russian Federation. The Party’s efforts will focus on achieving these goals through strategic policy development, the election of capable leaders, and ensuring the integrity of the electoral process." }
+                ]
+            },
+            article2: {
+                title: "ARTICLE II: MEMBERSHIP",
+                sections: [
+                    { id: "charter-article2-section1", title: "Section 1. Composition of Membership", text: "Membership shall consist of two representatives from each region of the Russian Federation. These individuals will represent the Party within their respective regions, serve on committees, and contribute to the development of the Party’s strategy at the national level." },
+                    { id: "charter-article2-section2", title: "Section 2. Key Positions", text: "Each region’s representatives serve as the Board of the National Committee. The entire Party membership will elect a Chairman, who will then appoint officers such as the Secretary, Co-Chair, Treasurer, and others as needed. These officers will manage the day-to-day operations of the Party." },
+                    { id: "charter-article2-section3", title: "Section 3. Membership Eligibility", text: "To be eligible for membership, individuals must demonstrate adherence to the values and principles outlined in the Party’s platform. Members must actively support the Party’s mission and be willing to work for the promotion of United Russia’s goals." }
+                ]
+            },
+            article3: {
+                title: "ARTICLE III: OFFICERS AND DUTIES",
+                sections: [
+                    { id: "charter-article3-section1", title: "Section 1. Officers", text: "The Party shall elect the following officers:\nChairman\nCo-Chair\nTreasurer\nAdditional officers may be appointed as needed, including Legal Counsel, Fundraising Chair, or others in specialized roles." },
+                    { id: "charter-article3-section2", title: "Section 2. Chairman", text: "The Chairman is responsible for overseeing the operations of the Party. The Chairman will ensure alignment with the Party's principles, manage national election strategies, and serve as the public face of United Russia." },
+                    { id: "charter-article3-section3", title: "Section 3. Treasurer", text: "The Treasurer will manage the financial affairs of the Party, ensuring compliance with Russian federal laws on political contributions and funding. The Treasurer is responsible for maintaining transparency in the Party’s financial dealings." }
+                ]
+            },
+            article4: {
+                title: "ARTICLE IV: MEETINGS AND VOTING",
+                sections: [
+                    { id: "charter-article4-section1", title: "Section 1. Meetings", text: "The Party shall hold at least one national meeting per year. Additional meetings may be called by the Chairman or requested by the membership. These meetings shall be open to all members, but only the Board of the National Committee and elected officers may vote on proposals or resolutions." },
+                    { id: "charter-article4-section2", title: "Section 2. Quorum", text: "A quorum for any official meeting of the Party shall consist of a majority of the voting members present. If a quorum is not reached, discussions may continue, but no binding votes may be held." },
+                    { id: "charter-article4-section3", title: "Section 3. Voting Procedures", text: "Votes shall be conducted in accordance with the Party’s guidelines. Proposals that require approval by the full Party membership will be voted on during the National Congress." }
+                ]
+            },
+            article5: {
+                title: "ARTICLE V: PLATFORM AND POLICIES",
+                sections: [
+                    { id: "charter-article5-section1", title: "Article V Content", text: "United Russia supports policies that promote:\nNational Unity and stability in the Russian Federation.\nEconomic growth and development through market reforms.\nStrong national defense and the protection of Russia’s sovereignty.\nSocial policies that support traditional family values and the welfare of all Russian citizens." }
+                ]
+            },
+            article6: {
+                title: "ARTICLE VI: AMENDMENTS",
+                sections: [
+                    { id: "charter-article6-section1", title: "Section 1. Amendments", text: "Amendments to these Bylaws may be proposed by any member of the Party. To be adopted, an amendment must receive approval by a two-thirds majority of the Board of the National Committee and be ratified by the full Party membership at the National Congress." }
+                ]
+            },
+            article7: {
+                title: "ARTICLE VII: MONITORING AND ENFORCEMENT",
+                sections: [
+                    { id: "charter-article7-section1", title: "Section 1. Enforcement of Principles", text: "All members of the Party must adhere to the Party’s values and principles. Any member who violates these principles may be subject to disciplinary action, including removal from office or expulsion from the Party." },
+                    { id: "charter-article7-section2", title: "Section 2. Oath of Loyalty", text: "All new members and officers must take an Oath of Loyalty, affirming their commitment to uphold the principles of the Party and support its mission." }
+                ]
+            },
+            signature: {
+                title: "Signature",
+                text: "SIGNED,\nVladimir Putin\nChairman of the United Russia Party"
+            }
+        };
+
+        // Define the content for each of the three pages for the Party Charter
+        const partyCharterPages = [
+            [partyCharterContent.preamble, partyCharterContent.article1, partyCharterContent.article2], // Page 1
+            [partyCharterContent.article3, partyCharterContent.article4, partyCharterContent.article5], // Page 2
+            [partyCharterContent.article6, partyCharterContent.article7, partyCharterContent.signature]  // Page 3
+        ];
+
+        // Party Platform content structured as a JavaScript object for easy rendering and navigation
+        const partyPlatformContent = {
+            preamble: {
+                title: "PREAMBLE",
+                text: `“A Strong Russia — United Russia”
+Our Nation’s history is defined by monumental struggles and heroic revival—from repelling foreign invasions to overcoming the devastation of the 1990s. In 2003, Russia has entered a new turning point. The Russian people no longer endure chaos, corruption, and instability—they yearn for unity, leadership, and national dignity.
+Formed in March 2003 through the merger of Unity and Fatherland–All Russia, United Russia emerged to lead Russia toward sovereignty, prosperity, and social cohesion. Under leaders like Interior Minister Boris Gryzlov and regional governor allies, we are the party of real results, the stability-first movement building on President Putin’s vision.
+In the December 7, 2003 State Duma election, United Russia won 37.56% of the party-list vote and secured 223 out of 450 seats, becoming the dominant political force in the legislature. Voter turnout stood at 55.75%, a clear call for responsible, responsive governance.
+We present this platform: a practical, centrist, and socially conscious roadmap for a stable and unified Russia. We reject extremes of ideology in favor of a pragmatic conservatism rooted in Russian historical traditions, statism, and patriotic values.`
+            },
+            chapter1: {
+                title: "CHAPTER I: SECURITY, SOVEREIGNTY & STATE STRENGTH",
+                sections: [
+                    { id: "platform-chapter1-item1", title: "Rebuild vertical power structure", text: "through federal governance aligned with strong regional leadership." },
+                    { id: "platform-chapter1-item2", title: "Strengthen internal security and public order", text: "through modernization of law enforcement and coordination." },
+                    { id: "platform-chapter1-item3", title: "Assert sovereign foreign policy", text: "and reject all forms of external interference." }
+                ]
+            },
+            chapter2: {
+                title: "CHAPTER II: LAW, GOVERNANCE & ANTI-CORRUPTION",
+                sections: [
+                    { id: "platform-chapter2-item1", title: "Reform federal bureaucracy", text: "to reduce red tape and improve transparency." },
+                    { id: "platform-chapter2-item2", title: "Combat corruption", text: "through accountability, digital modernization, and decentralization." },
+                    { id: "platform-chapter2-item3", title: "Strengthen judiciary", text: "with protections for civil rights and independence from political interference." }
+                ]
+            },
+            chapter3: {
+                title: "CHAPTER III: ECONOMIC DEVELOPMENT & MIXED-ECONOMY GROWTH",
+                sections: [
+                    { id: "platform-chapter3-item1", title: "Maintain a mixed economy", text: "balancing free enterprise and strategic state oversight." },
+                    { id: "platform-chapter3-item2", title: "Build upon early 2000s GDP growth", text: "(6-8% annually) and reduce poverty." },
+                    { id: "platform-chapter3-item3", title: "Support state control of strategic sectors", text: "energy, natural resources, infrastructure." },
+                    { id: "platform-chapter3-item4", title: "Promote small and medium enterprise", text: "through tax relief and credit access." }
+                ]
+            },
+            chapter4: {
+                title: "CHAPTER IV: SOCIAL STABILITY & FAMILY VALUES",
+                sections: [
+                    { id: "platform-chapter4-item1", title: "Expand funding", text: "for pensions, healthcare, and rural education." },
+                    { id: "platform-chapter4-item2", title: "Promote cultural values", text: "patriotic upbringing, and respect for tradition." },
+                    { id: "platform-chapter4-item3", title: "Increase support", text: "for young families and working mothers." }
+                ]
+            },
+            chapter5: {
+                title: "CHAPTER V: CULTURE, IDENTITY & CIVIC UNITY",
+                sections: [
+                    { id: "platform-chapter5-item1", title: "Promote Russian cultural heritage and unity", text: "through national education curricula." },
+                    { id: "platform-chapter5-item2", title: "Reject radical economic liberalism or ideological extremism.", text: "" },
+                    { id: "platform-chapter5-item3", title: "Support Russian Orthodox Church and traditional institutions", text: "as pillars of national unity." }
+                ]
+            },
+            summary: {
+                title: "20-POINT PUBLIC POLICY COMMITMENT SUMMARY",
+                text: `Provide robust internal security and counterterrorism.
+Strengthen sovereignty by reforming federal-regional governance.
+Simplify government bureaucracy and promote efficiency.
+Modernize judiciary and ensure rule of law.
+Expand GDP and lift regional economies.
+Increase pensions, education, and healthcare support.
+Maintain strategic control over energy and resource sectors.
+Expand small business through tax relief and loan access.
+Support traditional family values and population growth policies.
+Fund patriotic youth programs and civic training.
+Build national infrastructure including roads and transport.
+Protect Russian identity through culture and language policy.
+Prioritize veterans and Chernobyl-affected communities.
+Decentralize media while supporting federal cultural programming.
+Assert foreign policy independence and global balance.
+Oppose ideological radicalism from left or right.
+Coordinate regional governors and elite cooperation.
+Maintain internal party unity through pragmatic governance.
+Uphold the "Path of National Success" manifesto.
+Use media responsibly to foster national values and transparency.`
+            },
+            conclusion: {
+                title: "CONCLUSION",
+                text: `United Russia stands not for empty slogans or ideological fantasies but for measurable results and real governance. The Russian people seek calm, pride, and purpose. Our platform reflects that desire—building a Russia that is stable, sovereign, socially just, and historically proud. This is our mission, and this is our commitment.`
+            }
+        };
+
+        // Define the content for each of the four pages for the Party Platform
+        const partyPlatformPages = [
+            [partyPlatformContent.preamble, partyPlatformContent.chapter1], // Page 1
+            [partyPlatformContent.chapter2, partyPlatformContent.chapter3], // Page 2
+            [partyPlatformContent.chapter4, partyPlatformContent.chapter5], // Page 3
+            [partyPlatformContent.summary, partyPlatformContent.conclusion]  // Page 4
+        ];
+
+
+        // Data for projects (for carousel and grid)
+        const projectsData = [
+          { id: 'safeRoads', name: 'safeRoads', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Roads', regions: 80, affectedRegions: ['Moscow Oblast', 'Saint Petersburg', 'Krasnodar Krai', 'Chelyabinsk Oblast', 'Sverdlovsk Oblast'] },
+          { id: 'urbanEnvironment', name: 'urbanEnvironment', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=City', regions: 75, affectedRegions: ['Saint Petersburg', 'Novosibirsk Oblast', 'Tatarstan Republic', 'Samara Oblast', 'Nizhny Novgorod Oblast'] },
+          { id: 'childrensSports', name: 'childrensSports', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Sports', regions: 60, affectedRegions: ['Krasnoyarsk Krai', 'Irkutsk Oblast', 'Kemerovo Oblast'] },
+          { id: 'oneCountryAccessibleEnvironment', name: 'oneCountryAccessibleEnvironment', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Access', regions: 55, affectedRegions: ['Moscow Oblast', 'Rostov Oblast'] },
+          { id: 'womensMovementOfUnitedRussia', name: 'womensMovementOfUnitedRussia', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Women', regions: 45, affectedRegions: ['Dagestan Republic', 'Chechen Republic'] },
+          { id: 'protectionOfWildlife', name: 'protectionOfWildlife', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Wildlife', regions: 70, affectedRegions: ['Kamchatka Krai', 'Primorsky Krai'] },
+          { id: 'healthyFuture', name: 'healthyFuture', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Health', regions: 65, affectedRegions: ['Sverdlovsk Oblast', 'Rostov Oblast', 'Perm Krai', 'Volgograd Oblast'] },
+          { id: 'greenEconomy', name: 'greenEconomy', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Green', regions: 50, affectedRegions: ['Tyumen Oblast', 'Khanty-Mansi Autonomous Okrug'] },
+          { id: 'historicalMemory', name: 'historicalMemory', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=History', regions: 85, affectedRegions: ['Vladimir Oblast', 'Pskov Oblast', 'Smolensk Oblast', 'Novgorod Oblast'] },
+          { id: 'strongFamily', name: 'strongFamily', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Family', regions: 70, affectedRegions: ['Bashkortostan Republic', 'Chuvash Republic'] },
+          { id: 'cultureOfTheSmallHomeland', name: 'cultureOfTheSmallHomeland', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Culture', regions: 60, affectedRegions: ['Mari El Republic', 'Mordovia Republic'] },
+          { id: 'aWorldOfPossibilities', name: 'aWorldOfPossibilities', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=World', regions: 55, affectedRegions: ['Saint Petersburg', 'Moscow Oblast'] },
+          { id: 'myCareerWithUnitedRussia', name: 'myCareerWithUnitedRussia', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Career', regions: 40, affectedRegions: ['Kirov Oblast', 'Kostroma Oblast'] },
+          { id: 'newSchool', name: 'newSchool', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=School', regions: 78, affectedRegions: ['Ulyanovsk Oblast', 'Saratov Oblast'] },
+          { id: 'entrepreneurship', name: 'entrepreneurship', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Biz', regions: 62, affectedRegions: ['Penza Oblast', 'Orenburg Oblast'] },
+          { id: 'russianVillage', name: 'russianVillage', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Village', regions: 58, affectedRegions: ['Tambov Oblast', 'Oryol Oblast'] },
+          { id: 'olderGeneration', name: 'olderGeneration', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Seniors', regions: 72, affectedRegions: ['Lipetsk Oblast', 'Kursk Oblast'] },
+          { id: 'digitalRussia', name: 'digitalRussia', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Digital', regions: 68, affectedRegions: ['Kaluga Oblast', 'Bryansk Oblast'] },
+          { id: 'cleanCountry', name: 'cleanCountry', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Clean', regions: 77, affectedRegions: ['Belgorod Oblast', 'Voronezh Oblast'] },
+          { id: 'housingAndPublicUtilities', name: 'housingAndPublicUtilities', icon: 'https://placehold.co/80x80/E6F0FA/003399?text=Housing', regions: 53, affectedRegions: ['Arkhangelsk Oblast', 'Murmansk Oblast'] },
+        ];
+
+        // Define the 6 custom regions and their federal subjects
+        const CUSTOM_REGIONS = [
+          "Northern Frontier",
+          "Volga Valley",
+          "Caucasia",
+          "Central Steppes",
+          "Outer Mongolia",
+          "Siberian Frontier"
+        ];
+
+        // Mapping of federal subjects to their new custom regions
+        // This mapping is primarily for the project data, not for the map rendering itself
+        // as the map will directly use the merged GeoJSON properties.
+        const regionMapping = {
+            "Republic of Karelia": "Northern Frontier",
+            "Arkhangelsk Oblast": "Northern Frontier",
+            "Murmansk Oblast": "Northern Frontier",
+            "Vologda Oblast": "Northern Frontier",
+            "Komi Republic": "Northern Frontier",
+            "Nenets Autonomous Okrug": "Northern Frontier",
+            "Yamalo-Nenets Autonomous Okrug": "Northern Frontier",
+            "Kirov Oblast": "Northern Frontier",
+            "Perm Krai": "Northern Frontier", // Perm Krai split between Northern Frontier and Central Steppes, assigning to Northern for simplicity
+            "Moscow": "Volga Valley",
+            "Moscow Oblast": "Volga Valley",
+            "Tver Oblast": "Volga Valley",
+            "Smolensk Oblast": "Volga Valley",
+            "Kaluga Oblast": "Volga Valley",
+            "Bryansk Oblast": "Volga Valley",
+            "Vladimir Oblast": "Volga Valley",
+            "Yaroslavl Oblast": "Volga Valley",
+            "Ivanovo Oblast": "Volga Valley",
+            "Ryazan Oblast": "Volga Valley",
+            "Tula Oblast": "Volga Valley",
+            "Nizhny Novgorod Oblast": "Volga Valley",
+            "Chuvash Republic": "Volga Valley",
+            "Mari El Republic": "Volga Valley", // Corrected from "Mordovia"
+            "Mordovia Republic": "Volga Valley",
+            "Ulyanovsk Oblast": "Volga Valley",
+            "Penza Oblast": "Volga Valley",
+            "Saratov Oblast": "Volga Valley",
+            "Tambov Oblast": "Volga Valley",
+            "Voronezh Oblast": "Volga Valley",
+            "Lipetsk Oblast": "Volga Valley",
+            "Kursk Oblast": "Volga Valley",
+            "Belgorod Oblast": "Volga Valley",
+            "Oryol Oblast": "Volga Valley",
+            "Krasnodar Krai": "Caucasia",
+            "Rostov Oblast": "Caucasia",
+            "Republic of Adygea": "Caucasia",
+            "Republic of Kalmykia": "Caucasia",
+            "Stavropol Krai": "Caucasia",
+            "Republic of Dagestan": "Caucasia",
+            "Chechen Republic": "Caucasia",
+            "Republic of Ingushetia": "Caucasia",
+            "Republic of North Ossetia-Alania": "Caucasia",
+            "Kabardino-Balkar Republic": "Caucasia",
+            "Karachay-Cherkess Republic": "Caucasia",
+            "Republic of Tatarstan": "Central Steppes",
+            "Bashkortostan Republic": "Central Steppes", // Corrected from "Bashkortostan"
+            "Samara Oblast": "Central Steppes",
+            "Orenburg Oblast": "Central Steppes",
+            "Chelyabinsk Oblast": "Central Steppes",
+            "Kurgan Oblast": "Central Steppes",
+            "Sverdlovsk Oblast": "Central Steppes",
+            // "Perm Krai": "Central Steppes", // Already assigned to Northern Frontier for simplicity
+            "Udmurt Republic": "Central Steppes",
+            "Altai Krai": "Central Steppes",
+            "Altai Republic": "Central Steppes",
+            "Novosibirsk Oblast": "Central Steppes",
+            "Tomsk Oblast": "Central Steppes",
+            "Kemerovo Oblast": "Central Steppes",
+            "Omsk Oblast": "Central Steppes",
+            "Republic of Tuva": "Outer Mongolia",
+            "Republic of Khakassia": "Outer Mongolia",
+            "Zabaykalsky Krai": "Outer Mongolia",
+            "Buryatia Republic": "Outer Mongolia", // Corrected from "Buryatia"
+            "Irkutsk Oblast": "Outer Mongolia",
+            "Krasnoyarsk Krai": "Siberian Frontier",
+            "Sakha Republic": "Siberian Frontier", // Corrected from "Sakha Republic (Yakutia)"
+            "Amur Oblast": "Siberian Frontier",
+            "Magadan Oblast": "Siberian Frontier",
+            "Kamchatka Krai": "Siberian Frontier",
+            "Chukotka Autonomous Okrug": "Siberian Frontier",
+            "Khabarovsk Krai": "Siberian Frontier",
+            "Primorsky Krai": "Siberian Frontier",
+            "Jewish Autonomous Oblast": "Siberian Frontier",
+            "Sakhalin Oblast": "Siberian Frontier",
+            // Include Crimea and Sevastopol if they are in the TopoJSON and need to be mapped
+            "Republic of Crimea": "Volga Valley", // Assigning to Volga Valley for example
+            "Sevastopol": "Volga Valley", // Assigning to Volga Valley for example
+        };
+
+        // Colors for the new custom regions
+        const regionColors = {
+            "Northern Frontier": "#4CAF50", // Green
+            "Volga Valley": "#D52B1E",    // Patriotic Red
+            "Caucasia": "#FFEB3B",        // Yellow
+            "Central Steppes": "#FF9800", // Orange
+            "Outer Mongolia": "#FFF9C4",  // Cream Yellow
+            "Siberian Frontier": "#003399" // United Blue
+        };
+
+        // Dummy project counts per NEW custom region
+        const customRegionProjectCounts = CUSTOM_REGIONS.reduce((acc, region) => {
+            acc[region] = Math.floor(Math.random() * 10) + 1; // Random count between 1 and 10
+            return acc;
+        }, {});
+
+
+        // Reusable Navigation Link component
+        const NavLink = ({ children, onClick }) => (
+          <button
+            onClick={onClick}
+            className="text-white hover:text-[#D52B1E] font-medium transition duration-200 ease-in-out font-oswald uppercase"
+          >
+            {children}
+          </button>
+        );
+
+        const HeroSection = ({ t }) => { // Added t prop
+          return (
+            <section
+              className="relative h-screen bg-cover bg-center text-white"
+              style={{
+                backgroundImage: "url(/images/kremlin-main.jpg)",
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black bg-opacity-60" />
+
+              <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
+                <h1 className="text-4xl md:text-6xl font-oswald font-extrabold mb-6">
+                  {t.heroTitle}
+                </h1>
+                <p className="max-w-2xl text-lg md:text-xl mb-8 font-inter">
+                  {t.heroDescription}
+                </p>
+                <a
+          href="https://canary.discord.com/channels/894566680741703721/1187360871740096602"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block bg-[#D52B1E] text-white font-bold px-6 py-3 rounded-full hover:bg-[#b2201a] transition duration-300 ease-in-out shadow-lg"
+        >
+          {t.runForOffice} &raquo;
+        </a>
+              </div>
+
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <a href="#main-content" className="text-white text-3xl">⌄</a>
+              </div>
+            </section>
+          );
+        };
+
+        // Content Section Component (re-purposed for general use)
+        const ContentSection = ({ title, description, t }) => {
+          return (
+            <section className="pt-4 pb-16 bg-[#FFFFFF]">
+              <div className="container mx-auto px-4 text-center">
+                <h2 className="text-4xl font-oswald font-bold text-[#3C3C3B] mb-6">{title}</h2>
+                <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto">
+                  {description}
+                </p>
+              </div>
+            </section>
+          );
+        };
+
+        // Footer Component
+        const Footer = ({ t }) => {
+          return (
+            <footer className="bg-[#3C3C3B] text-[#FFFFFF] py-12">
+              <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* About Section */}
+                <div>
+                  <h3 className="text-white text-xl font-oswald font-semibold mb-4">{t.aboutUs}</h3>
+                  <p className="text-sm font-inter">
+                    {t.aboutUsDescription}
+                  </p>
+                </div>
+
+                {/* Quick Links */}
+                <div>
+                  <h3 className="text-white text-xl font-oswald font-semibold mb-4">{t.quickLinks}</h3>
+                  <ul className="space-y-2 font-inter">
+                    <li><a href="https://sites.google.com/view/the-kremlin/kremlin" target="_blank" rel="noopener noreferrer" className="hover:text-[#FFD700] transition duration-200">{t.kremlin}</a></li>
+                    <li><a href="https://stateduma.my.canva.site/" target="_blank" rel="noopener noreferrer" className="hover:text-[#FFD700] transition duration-200">{t.stateDuma}</a></li>
+                    <li><a href="https://sites.google.com/view/rfgr-election-commission/home" target="_blank" rel="noopener noreferrer" className="hover:text-[#FFD700] transition duration-200">{t.cec}</a></li>
+                  </ul>
+                </div>
+
+                {/* Social Media */}
+                <div>
+                  <h3 className="text-white text-xl font-oswald font-semibold mb-4">{t.followUs}</h3>
+                  <div className="flex space-x-4">
+                    {/* Discord Icon */}
+                    <a href="https://discord.gg/SswsPv7mGM" target="_blank" rel="noopener noreferrer" className="text-white hover:text-[#FFD700] transition duration-200">
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.902 0c-1.548 0-2.812.83-3.662 2.062a14.28 14.28 0 00-2.118-.553c-.378-.094-.76-.17-1.14-.242C12.87 1.19 12.435 1 12 1s-.87.19-1.982.267c-.38.072-.762.148-1.14.242a14.28 14.28 0 00-2.118.553C5.912.83 4.648 0 3.1 0 1.385 0 0 1.254 0 2.802v15.396C0 19.145 1.254 20.4 2.802 20.4h.004c.83 0 1.6-.28 2.22-.765a10.98 10.98 0 001.378-.92c.628.423 1.34.75 2.1.977a11.98 11.98 0 002.5.346c.92 0 1.83-.106 2.7-.315a10.98 10.98 0 002.1-.977c.62.485 1.39.765 2.22.765h.004c1.718 0 3.098-1.254 3.098-2.802V2.802C24 1.254 22.615 0 20.902 0zM17.1 14.8c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM7.9 14.8c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center text-sm text-gray-500 mt-8 border-t border-gray-700 pt-8 font-inter">
+                &copy; {new Date().getFullYear()} {t.partyName}. {t.allRightsReserved}
+              </div>
+            </footer>
+          );
+        };
+
+        // New ClickableCard component for the homepage sections
+        const ClickableCard = ({ image, title, description, buttonText, onClick }) => (
+          <div
+            className="bg-[#FFFFFF] rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200"
+            onClick={onClick}
+          >
+            <img src={image} alt={title} className="w-full h-48 object-cover" />
+            <div className="p-6 text-left">
+              <h3 className="text-xl font-oswald font-bold text-[#3C3C3B] mb-2">{title} <span className="ml-1">&raquo;</span></h3>
+              <p className="text-[#3C3C3B] text-sm mb-4 font-inter">{description}</p>
+              <button className="text-[#003399] hover:text-[#D52B1E] font-semibold flex items-center font-inter">
+                {buttonText} <span className="ml-1">&raquo;</span>
+              </button>
+            </div>
+          </div>
+        );
+
+
+        const ValueCard = ({ title, description }) => (
+          <div className="bg-[#E6F0FA] p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+            <h3 className="text-xl font-oswald font-semibold text-[#003399] mb-3">{title}</h3>
+            <p className="text-[#3C3C3B] font-inter">{description}</p>
+          </div>
+        );
+
+        // Party Charter Page Component
+        const PartyCharterPage = ({ t }) => {
+            // State to keep track of the currently viewed page (1, 2, or 3)
+            const [currentPageNumber, setCurrentPageNumber] = useState(1);
+            // useRef to store references to each section's DOM element for scrolling
+            const sectionRefs = useRef({});
+
+            // Get the content for the current page
+            const currentPageContent = partyCharterPages[currentPageNumber - 1];
+
+            // Function to scroll to a specific section by its ID
+            const navigateToSection = (id) => {
+                const sectionElement = sectionRefs.current[id];
+                if (sectionElement) {
+                    sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            // Function to navigate to the previous page
+            const navigatePreviousPage = () => {
+                setCurrentPageNumber(prev => Math.max(1, prev - 1));
+                // Scroll to top of content area on page change
+                document.getElementById('charter-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            // Function to navigate to the next page
+            const navigateNextPage = () => {
+                setCurrentPageNumber(prev => Math.min(partyCharterPages.length, prev + 1));
+                // Scroll to top of content area on page change
+                document.getElementById('charter-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            return (
+                // Main container for the charter page, with padding for fixed navbar
+                <div className="pt-24 min-h-screen bg-[#FFFFFF] flex"> {/* Removed flex-row-reverse */}
+                    {/* Main Content Area - now on the left */}
+                    <div className="flex-grow p-8 overflow-y-auto" style={{ marginRight: '25%' }}> {/* Added margin-right */}
+                        <div className="max-w-4xl mx-auto bg-[#FFFFFF] p-10 rounded-lg shadow-xl border border-gray-200" id="charter-top">
+                            <h1 className="text-5xl font-oswald font-extrabold text-center text-[#3C3C3B] mb-10">{t.partyCharterPageTitle}</h1>
+
+                            {/* Render content for the current page */}
+                            {currentPageContent.map((chapter) => {
+                                if (chapter.sections) {
+                                    return (
+                                        <div key={chapter.title} className="mb-8">
+                                            <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6" id={chapter.title.replace(/\s+/g, '-').toLowerCase()} ref={el => sectionRefs.current[chapter.title.replace(/\s+/g, '-').toLowerCase()] = el}>{chapter.title}</h2>
+                                            {chapter.sections.map((section) => (
+                                                <div key={section.id} id={section.id} ref={el => sectionRefs.current[section.id] = el} className="mb-6 border-b border-gray-200 pb-4 last:border-b-0">
+                                                    <h3 className="text-2xl font-oswald font-semibold text-[#3C3C3B] mb-3">{section.title}</h3>
+                                                    {section.text.split('\n').map((line, lineIndex) => (
+                                                        <p key={lineIndex} className="text-lg font-inter text-[#3C3C3B] leading-relaxed mb-2">{line}</p>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div key={chapter.title} id={chapter.title.replace(/\s+/g, '-').toLowerCase()} ref={el => sectionRefs.current[chapter.title.replace(/\s+/g, '-').toLowerCase()] = el} className="mb-8 border-b border-gray-200 pb-4 last:border-b-0">
+                                            <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6">{chapter.title}</h2>
+                                            {chapter.text.split('\n').map((line, lineIndex) => (
+                                                <p key={lineIndex} className="text-lg font-inter text-[#3C3C3B] leading-relaxed mb-2">{line}</p>
+                                            ))}
+                                        </div>
+                                    );
+                                }
+                            })}
+
+                            {/* Bottom Navigation Arrows */}
+                            <div className="flex justify-between items-center mt-10">
+                                <button
+                                    onClick={navigatePreviousPage}
+                                    disabled={currentPageNumber === 1}
+                                    className={`bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out ${currentPageNumber === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    &larr; {t.previous}
+                                </button>
+                                <span className="text-lg font-inter text-[#3C3C3B]">
+                                    {t.section} {currentPageNumber} of {partyCharterPages.length}
+                                </span>
+                                <button
+                                    onClick={navigateNextPage}
+                                    disabled={currentPageNumber === partyCharterPages.length}
+                                    className={`bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out ${currentPageNumber === partyCharterPages.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {t.next} &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Right Navigation Menu (Fixed) */}
+                    <div className="w-1/4 bg-[#E6F0FA] text-[#003399] p-6 fixed h-full overflow-y-auto pt-24 right-0 top-0 border-l border-gray-200">
+                        <h2 className="text-3xl font-oswald font-bold mb-6">{t.partyCharterPageTitle}</h2>
+                        <nav>
+                            <ul>
+                                {Object.keys(partyCharterContent).map((key) => {
+                                    const chapter = partyCharterContent[key];
+                                    const chapterId = chapter.title.replace(/\s+/g, '-').toLowerCase(); // Create ID from title
+
+                                    return (
+                                        <li key={key} className="mb-4">
+                                            <a
+                                                href={`#${chapterId}`} // Link to the chapter ID
+                                                onClick={(e) => {
+                                                    e.preventDefault(); // Prevent default anchor link behavior
+                                                    // Determine which page this chapter/section is on
+                                                    let targetPage = 1;
+                                                    if (key === 'article3' || key === 'article4' || key === 'article5') {
+                                                        targetPage = 2;
+                                                    } else if (key === 'article6' || key === 'article7' || key === 'signature') {
+                                                        targetPage = 3;
+                                                    }
+                                                    setCurrentPageNumber(targetPage); // Change page
+                                                    // Wait for render, then scroll
+                                                    setTimeout(() => navigateToSection(chapter.sections ? chapter.sections[0].id : chapterId), 0);
+                                                }}
+                                                className="text-xl font-oswald font-semibold hover:text-[#D52B1E] transition duration-300"
+                                            >
+                                                {chapter.title}
+                                            </a>
+                                            {/* Render sub-sections if they exist */}
+                                            {chapter.sections && (
+                                                <ul className="ml-4 mt-2 space-y-1">
+                                                    {chapter.sections.map((section) => (
+                                                        <li key={section.id}>
+                                                            <a
+                                                                href={`#${section.id}`} // Link to the section ID
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    // Determine which page this section is on
+                                                                    let targetPage = 1;
+                                                                    if (section.id.startsWith('charter-article3') || section.id.startsWith('charter-article4') || section.id.startsWith('charter-article5')) {
+                                                                        targetPage = 2;
+                                                                    } else if (section.id.startsWith('charter-article6') || section.id.startsWith('charter-article7')) {
+                                                                        targetPage = 3;
+                                                                    }
+                                                                    setCurrentPageNumber(targetPage); // Change page
+                                                                    // Wait for render, then scroll
+                                                                    setTimeout(() => navigateToSection(section.id), 0);
+                                                                }}
+                                                                className="text-lg font-inter hover:text-[#D52B1E] transition duration-300 block"
+                                                            >
+                                                                {section.title}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </nav>
+                        {/* Back to Top link */}
+                        <a href="#charter-top" className="text-[#003399] hover:underline mt-8 block font-inter" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>{t.backToTop}</a>
+                    </div>
+                </div>
+            );
+        };
+
+        // SidebarTabs Component
+        const SidebarTabs = ({
+          t,
+          highlightedRegionName,
+          activeProjectFilter,
+          handleRegionListClick,
+          handleProjectFilterClick,
+          searchTerm,
+          setSearchTerm,
+          CUSTOM_REGIONS, // Changed to CUSTOM_REGIONS
+          projectsData // Passed as prop
+        }) => {
+          const [activeTab, setActiveTab] = useState('regions'); // Default active tab
+
+          const filteredItems = activeTab === 'regions'
+            ? CUSTOM_REGIONS.filter(region => // Filter CUSTOM_REGIONS
+                region.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+            : projectsData.filter(project =>
+                t[project.name].toLowerCase().includes(searchTerm.toLowerCase())
+              );
+
+          const placeholderText = activeTab === 'regions' ? 'Search Region...' : 'Search Project...';
+
+          return (
+            <div className="flex flex-col space-y-4">
+              {/* Tab Buttons */}
+              <div className="flex rounded-md shadow-sm overflow-hidden">
+                <button
+                  className={`flex-1 py-2 px-4 text-center font-oswald font-semibold transition-all duration-200 ${
+                    activeTab === 'regions'
+                      ? 'bg-[#E6F0FA] text-[#003399]'
+                      : 'bg-gray-100 text-[#3C3C3B] hover:bg-gray-200'
+                  }`}
+                  onClick={() => {
+                    setActiveTab('regions');
+                    setSearchTerm(''); // Clear search when switching tabs
+                  }}
+                >
+                  REGIONS
+                </button>
+                <button
+                  className={`flex-1 py-2 px-4 text-center font-oswald font-semibold transition-all duration-200 ${
+                    activeTab === 'projects'
+                      ? 'bg-[#E6F0FA] text-[#003399]'
+                      : 'bg-gray-100 text-[#3C3C3B] hover:bg-gray-200'
+                  }`}
+                  onClick={() => {
+                    setActiveTab('projects');
+                    setSearchTerm(''); // Clear search when switching tabs
+                  }}
+                >
+                  PROJECTS
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <input
+                type="text"
+                placeholder={placeholderText}
+                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#003399] font-inter"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+
+              {/* Scrollable List */}
+              <div className="border border-gray-300 rounded-md h-64 overflow-y-auto bg-[#FFFFFF] p-2">
+                <h4 className="font-oswald font-semibold mb-2 text-[#3C3C3B]">
+                  {activeTab === 'regions' ? 'Macro-Regions' : 'Federal Projects'}
+                </h4>
+                <ul className="font-inter">
+                  {filteredItems.map((item, index) => (
+                    <li
+                      key={index}
+                      className={`p-1 cursor-pointer rounded-md transition-colors duration-150
+                        ${activeTab === 'regions' && highlightedRegionName === item ? 'bg-[#FFD700] font-bold' : ''}
+                        ${activeTab === 'projects' && activeProjectFilter === item.id ? 'bg-[#E6F0FA] font-bold' : ''}
+                        hover:bg-gray-100
+                      `}
+                      onClick={() => {
+                        if (activeTab === 'regions') {
+                          handleRegionListClick(item);
+                        } else {
+                          handleProjectFilterClick(item.id);
+                        }
+                      }}
+                    >
+                      {activeTab === 'regions' ? item : t[item.name]}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          );
+        };
+
+
+        // Party Projects Page Component
+        const PartyProjectsPage = ({ setCurrentPage, t }) => {
+          const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
+          const currentProject = projectsData[currentProjectIndex];
+
+          const nextProject = () => {
+            setCurrentProjectIndex((prevIndex) => (prevIndex + 1) % projectsData.length);
+          };
+
+          const prevProject = () => {
+            setCurrentProjectIndex((prevIndex) => (prevIndex - 1 + projectsData.length) % projectsData.length);
+          };
+
+          const mapRef = useRef(null); // Ref for the map container
+          const tooltipRef = useRef(null); // Ref for the tooltip
+          const [hoveredRegion, setHoveredRegion] = useState(null);
+          const [highlightedRegionName, setHighlightedRegionName] = useState(null); // For search/list highlight
+          const [activeProjectFilter, setActiveProjectFilter] = useState(null); // For project filter
+          const [searchTerm, setSearchTerm] = useState('');
+          const [geoJsonData, setGeoJsonData] = useState(null); // Store fetched GeoJSON data
+          const [loadingMap, setLoadingMap] = useState(true);
+
+          // Fetch GeoJSON data for Russia's Macro-Regions
+          useEffect(() => {
+            // Use setTimeout to ensure window.content_fetcher is available
+            const fetchMapData = () => {
+              if (window.content_fetcher) {
+                window.content_fetcher.fetch(
+                    "russia_macro_regions.geojson", // This is the query, not the contentFetchId
+                    [{ id: "russia_macro_regions.geojson-a9021644-8846-4e50-8b43-4b68e987c2b3", type: "FILE" }]
+                )
+                  .then(response => {
+                    const data = JSON.parse(response);
+                    setGeoJsonData(data);
+                    console.log("GeoJSON data loaded successfully:", data);
+                    setLoadingMap(false);
+                  })
+                  .catch(error => {
+                    console.error("Error loading the GeoJSON data: ", error);
+                    setLoadingMap(false);
+                  });
+              } else {
+                console.warn("window.content_fetcher is not available. Retrying in 100ms...");
+                setTimeout(fetchMapData, 100); // Retry after a short delay
+              }
+            };
+
+            fetchMapData(); // Initial call to fetch data
+          }, []); // Empty dependency array means this runs once on mount
+
+
+          // D3 map rendering
+          useEffect(() => {
+            const d3 = window.d3;
+
+            // Ensure D3 and GeoJSON data are available
+            if (!d3 || !geoJsonData) {
+                console.warn("Map dependencies or GeoJSON data missing. Skipping map draw.");
+                return;
+            }
+
+            const svgContainer = d3.select(mapRef.current);
+            const svgWidth = svgContainer.node()?.clientWidth || 800;
+            const svgHeight = svgContainer.node()?.clientHeight || 600;
+
+            // Clear previous SVG to prevent duplicates on re-render
+            svgContainer.select("svg").remove();
+
+            const svg = svgContainer.append("svg")
+                .attr("width", svgWidth)
+                .attr("height", svgHeight)
+                .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+
+            const projection = d3.geoMercator().fitSize([svgWidth, svgHeight], geoJsonData);
+            const path = d3.geoPath().projection(projection);
+
+            svg.append("g")
+                .selectAll("path")
+                .data(geoJsonData.features)
+                .join("path")
+                .attr("d", path)
+                .attr("fill", d => {
+                    const regionName = d.properties.name; // Assuming 'name' property holds the merged region name
+                    // Apply highlight if region matches the sidebar selection
+                    if (highlightedRegionName && regionName === highlightedRegionName) {
+                        return "#FFD700"; // Gold for highlighted region
+                    }
+                    // Apply project filter highlight
+                    if (activeProjectFilter) {
+                        const project = projectsData.find(p => p.id === activeProjectFilter);
+                        // Check if the current map region is affected by the active project
+                        if (project && project.affectedRegions.some(affectedFederalSubject => {
+                            // Map the federal subject from project data to its custom region
+                            const customRegionOfAffectedSubject = regionMapping[affectedFederalSubject];
+                            // Check if the current map region (d.properties.name) matches the custom region of the affected subject
+                            return regionName === customRegionOfAffectedSubject;
+                        })) {
+                            return "#4CAF50"; // Green for regions affected by the active project
+                        }
+                    }
+                    return regionColors[regionName] || "#E0E0E0"; // Use custom region color or default light gray
+                })
+                .attr("stroke", "#FFFFFF") // White borders for regions
+                .attr("stroke-width", 0.5)
+                .on("mouseover", function(event, d) {
+                    const regionName = d.properties.name || 'Unknown Region';
+                    setHoveredRegion(regionName);
+                    d3.select(this).attr("stroke-width", 2); // Thicker border on hover
+                    if (tooltipRef.current) {
+                        tooltipRef.current.style.display = "block";
+                        tooltipRef.current.style.left = `${event.pageX + 10}px`;
+                        tooltipRef.current.style.top = `${event.pageY - 20}px`;
+                        tooltipRef.current.innerText = `${t.projectsMapHover} ${regionName}`;
+                    }
+                })
+                .on("mousemove", function(event) {
+                    if (tooltipRef.current) {
+                        tooltipRef.current.style.left = `${event.pageX + 10}px`;
+                        tooltipRef.current.style.top = `${event.pageY - 20}px`;
+                    }
+                })
+                .on("mouseout", function(event, d) {
+                    const regionName = d.properties.name;
+                    setHoveredRegion(null);
+                    d3.select(this).attr("stroke-width", 0.5); // Reset border on mouse out
+                    d3.select(this).attr("fill", d => {
+                        // Reapply original fill color or highlight if still selected/filtered
+                        if (highlightedRegionName && regionName === highlightedRegionName) {
+                            return "#FFD700";
+                        }
+                        if (activeProjectFilter) {
+                            const project = projectsData.find(p => p.id === activeProjectFilter);
+                            if (project && project.affectedRegions.some(affectedFederalSubject => {
+                                const customRegionOfAffectedSubject = regionMapping[affectedFederalSubject];
+                                return regionName === customRegionOfAffectedSubject;
+                            })) {
+                                return "#4CAF50";
+                            }
+                        }
+                        return regionColors[regionName] || "#E0E0E0";
+                    });
+                    if (tooltipRef.current) tooltipRef.current.style.display = "none";
+                })
+                .on("click", (event, d) => {
+                    const regionName = d.properties.name;
+                    handleRegionClick(regionName);
+                });
+
+            // Add resize listener to redraw map on window resize
+            const resizeObserver = new ResizeObserver(() => drawMap());
+            resizeObserver.observe(mapRef.current);
+            return () => resizeObserver.disconnect(); // Cleanup on unmount
+          }, [geoJsonData, highlightedRegionName, activeProjectFilter]); // Redraw when data or highlight/filter changes
+
+
+          const handleRegionClick = (regionName) => {
+            setCurrentPage(`region-detail-${regionName.replace(/\s+/g, '-')}`);
+          };
+
+          const handleRegionListClick = (regionName) => {
+            setHighlightedRegionName(regionName);
+            setActiveProjectFilter(null); // Clear project filter when a region is selected from the list
+          };
+
+          const handleProjectFilterClick = (projectId) => {
+            setActiveProjectFilter(activeProjectFilter === projectId ? null : projectId);
+            setHighlightedRegionName(null); // Clear region highlight when a project is selected
+          };
+
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              {/* Page Header Image */}
+              <section
+                className="relative bg-cover bg-center h-64 flex items-center justify-center"
+                style={{
+                  backgroundImage: `url('https://placehold.co/1200x256/003399/FFFFFF?text=Party+Projects+Banner')`, // Placeholder image
+                  backgroundAttachment: 'fixed',
+                }}
+              >
+                <div className="absolute inset-0 bg-black opacity-30"></div>
+              </section>
+
+              <div className="container mx-auto px-4 py-8">
+                {/* Top Section: Title, Description, and Carousel */}
+                <div className="flex flex-col md:flex-row items-center justify-between mb-12">
+                  <div className="md:w-1/2 text-center md:text-left mb-8 md:mb-0">
+                    <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-4">{t.partyProjectsPageTitle}</h1>
+                    <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed mb-6">
+                      {t.partyProjectsPageDescription}
+                    </p>
+                    <div className="flex justify-center md:justify-start space-x-8 text-[#3C3C3B] font-semibold text-xl font-inter">
+                      <div>
+                        <span className="text-[#003399] text-4xl font-bold">22</span> {t.currentPartyProjects}
+                      </div>
+                      <div>
+                        <span className="text-[#003399] text-4xl font-bold">6</span> {t.regionsCovered} {/* Adjusted to 6 for macro-regions */}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carousel Section */}
+                  <div className="md:w-1/2 relative flex items-center justify-center bg-[#003399] rounded-2xl shadow-xl p-8 h-80">
+                    <button onClick={prevProject} className="absolute left-4 text-white text-4xl p-2 rounded-full bg-black bg-opacity-25 hover:bg-opacity-50 transition">
+                      &lt;
+                    </button>
+                    <div
+                      className="text-white text-center cursor-pointer"
+                      onClick={() => setCurrentPage(`project-${currentProject.id}`)}
+                    >
+                      <img src={currentProject.icon} alt="Project Icon" className="w-20 h-20 mx-auto mb-4" />
+                      <h3 className="text-3xl font-oswald font-bold">{t[currentProject.name]}</h3>
+                    </div>
+                    <button onClick={nextProject} className="absolute right-4 text-white text-4xl p-2 rounded-full bg-black bg-opacity-25 hover:bg-opacity-50 transition">
+                      &gt;
+                    </button>
+                  </div>
+                </div>
+
+                {/* Projects Map Section */}
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-oswald font-bold text-[#3C3C3B] mb-8">{t.projectsMap}</h2>
+                  <div className="bg-[#FFFFFF] rounded-lg shadow-md p-6 flex flex-col md:flex-row items-start justify-center gap-6 relative border border-gray-200" id="map-container-parent">
+                    {/* SidebarTabs Component */}
+                    <div className="md:w-1/3 w-full">
+                      <SidebarTabs
+                        t={t}
+                        highlightedRegionName={highlightedRegionName}
+                        activeProjectFilter={activeProjectFilter}
+                        handleRegionListClick={handleRegionListClick}
+                        handleProjectFilterClick={handleProjectFilterClick}
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        CUSTOM_REGIONS={CUSTOM_REGIONS}
+                        projectsData={projectsData}
+                      />
+                    </div>
+
+                    {/* Interactive Map */}
+                    <div ref={mapRef} id="map-svg-container" className="md:w-2/3 w-full h-[600px] border border-gray-300 rounded-md">
+                      {loadingMap ? (
+                        <p className="font-inter text-[#3C3C3B]">Loading map...</p>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                        </div>
+                      )}
+                    </div>
+                    {/* Tooltip for map hover */}
+                    <div
+                      ref={tooltipRef}
+                      className="map-tooltip"
+                    >
+                    </div>
+                  </div>
+                </div>
+
+                {/* Projects Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {projectsData.map((project) => (
+                    <ProjectGridCard
+                      key={project.id}
+                      project={project}
+                      t={t}
+                      setCurrentPage={setCurrentPage}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // Component for individual project cards in the grid
+        const ProjectGridCard = ({ project, t, setCurrentPage }) => (
+          <div
+            className="bg-[#FFFFFF] rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition duration-300 ease-in-out transform hover:-translate-y-1 border border-gray-200"
+            onClick={() => setCurrentPage(`project-${project.id}`)}
+          >
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <img src={project.icon} alt="Project Icon" className="w-12 h-12 mr-4" />
+                <h3 className="text-2xl font-oswald font-bold text-[#3C3C3B]">{t[project.name]}</h3>
+              </div>
+              <p className="text-[#3C3C3B] text-sm font-inter">{project.regions} {t.regionsCovered}</p>
+            </div>
+          </div>
+        );
+
+
+        // Individual Project Detail Page Component
+        const ProjectDetailPage = ({ project, t }) => {
+          const title = t[project.name];
+          const description = t[`${project.name}Description`];
+
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              {/* Page Header Image for Project Detail */}
+              <section
+                className="relative bg-cover bg-center h-64 flex items-center justify-center"
+                style={{
+                  backgroundImage: `url('https://placehold.co/1200x256/003399/FFFFFF?text=${title.replace(/\s/g, '+')}+Banner')`,
+                  backgroundAttachment: 'fixed',
+                }}
+              >
+                <div className="absolute inset-0 bg-black opacity-30"></div>
+              </section>
+
+              <div className="container mx-auto px-4 py-8">
+                <div className="flex items-center mb-6">
+                  <img src={project.icon} alt="Project Icon" className="w-16 h-16 mr-4 text-[#003399]" />
+                  <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B]">{title}</h1>
+                </div>
+
+                <div className="bg-[#FFFFFF] rounded-lg shadow-md p-8 leading-relaxed text-lg font-inter text-[#3C3C3B] border border-gray-200">
+                  {description.split('\n').map((paragraph, index) => (
+                    <p key={index} className="mb-4 last:mb-0">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // New What We Do Page Component
+        const WhatWeDoPage = ({ t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <section
+              className="relative bg-cover bg-center h-64 flex items-center justify-center"
+              style={{
+                backgroundImage: `url('https://placehold.co/1200x256/003399/FFFFFF?text=What+We+Do+Banner')`, // Banner for What We Do page
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-30"></div>
+            </section>
+
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.whatWeDoPageTitle}</h1>
+              <div className="bg-[#FFFFFF] rounded-lg shadow-md p-8 leading-relaxed text-lg font-inter text-[#3C3C3B] border border-gray-200">
+                {t.whatWeDoContent.split('\n').map((line, index) => {
+                  if (line.startsWith('- ')) {
+                    return <li key={index} className="ml-8 mb-1">{line.substring(2).trim()}</li>;
+                  } else if (line.trim() !== '') {
+                    return <p key={index} className="mb-4">{line.trim()}</p>;
+                  }
+                  return null;
+                })}
+              </div>
+            </div>
+          </div>
+        );
+
+        // New About The Party Page Component
+        const AboutThePartyPage = ({ t }) => {
+          const [openSection, setOpenSection] = useState(null);
+
+          const toggleSection = (sectionName) => {
+            setOpenSection(openSection === sectionName ? null : sectionName);
+          };
+
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              {/* Hero Banner */}
+              <section
+                className="relative bg-cover bg-center h-96 flex items-center justify-center text-white"
+                style={{
+                  backgroundImage: `url('/images/about united russia hero section.png')`,
+                  backgroundAttachment: 'fixed',
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-[#003399] to-[#D52B1E] opacity-70"></div>
+                <div className="relative z-10 text-center px-4">
+                  <h1 className="text-5xl md:text-6xl font-oswald font-extrabold mb-4 leading-tight">
+                    {t.ourPartyHeroHeadline}
+                  </h1>
+                  <p className="text-xl md:text-2xl font-inter opacity-90">
+                    {t.ourPartyHeroSubheadline}
+                  </p>
+                </div>
+              </section>
+
+              <div className="container mx-auto px-4 py-12">
+                {/* Section 2: Party Origins */}
+                <h2 className="text-4xl font-oswald font-bold text-center text-[#003399] mb-10">{t.partyOrigins}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                  <div className="bg-[#E6F0FA] p-8 rounded-lg shadow-md border border-gray-200">
+                    <h3 className="text-2xl font-oswald font-bold text-[#003399] mb-4">{t.ourFounding}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.ourFoundingDesc}</p>
+                  </div>
+                  <div className="bg-[#E6F0FA] p-8 rounded-lg shadow-md border border-gray-200">
+                    <h3 className="text-2xl font-oswald font-bold text-[#003399] mb-4">{t.victoryLegitimacy}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.victoryLegitimacyDesc}</p>
+                  </div>
+                  <div className="bg-[#E6F0FA] p-8 rounded-lg shadow-md border border-gray-200">
+                    <h3 className="text-2xl font-oswald font-bold text-[#003C3B] mb-4">{t.principlesOfFormation}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.principlesOfFormationDesc}</p>
+                  </div>
+                </div>
+
+                {/* Section 3: Core Identity (3 Pillars) */}
+                <h2 className="text-4xl font-oswald font-bold text-center text-[#003399] mb-10">{t.coreIdentity}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                  <div className="bg-[#FFFFFF] p-8 rounded-lg shadow-md text-center border border-gray-200">
+                    <div className="text-6xl text-[#FFD700] mb-4">🛡️</div> {/* Icon */}
+                    <h3 className="text-2xl font-oswald font-bold text-[#003399] mb-3">{t.sovereigntyPower}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.sovereigntyPowerDesc}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] p-8 rounded-lg shadow-md text-center border border-gray-200">
+                    <div className="text-6xl text-[#FFD700] mb-4">📈</div> {/* Icon */}
+                    <h3 className="text-2xl font-oswald font-bold text-[#003399] mb-3">{t.economicStabilityGrowth}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.economicStabilityGrowthDesc}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] p-8 rounded-lg shadow-md text-center border border-gray-200">
+                    <div className="text-6xl text-[#FFD700] mb-4">👨‍👩‍👧</div> {/* Icon */}
+                    <h3 className="text-2xl font-oswald font-bold text-[#003399] mb-3">{t.traditionUnity}</h3>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.traditionUnityDesc}</p>
+                  </div>
+                </div>
+
+                {/* Section 4: What Makes Us Different (Accordion) */}
+                <h2 className="text-4xl font-oswald font-bold text-center text-[#003399] mb-10">{t.whatMakesUsDifferent}</h2>
+                <div className="max-w-3xl mx-auto mb-12">
+                  {[
+                    { title: t.pragmaticCentrism, content: t.pragmaticCentrismDesc },
+                    { title: t.federalStrengthRegionalRoots, content: t.federalStrengthRegionalRootsDesc },
+                    { title: t.antiCorruptionReform, content: t.antiCorruptionReformDesc },
+                    { title: t.patrioticEducationCivicEngagement, content: t.patrioticEducationCivicEngagementDesc },
+                  ].map((item, index) => (
+                    <div key={index} className="bg-[#E6F0FA] rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
+                      <button
+                        className="w-full flex justify-between items-center p-6 text-left font-oswald font-bold text-lg text-[#003399] hover:bg-blue-100 transition duration-200 focus:outline-none"
+                        onClick={() => toggleSection(item.title)}
+                      >
+                        {item.title}
+                        <span className="text-2xl">
+                          {openSection === item.title ? '-' : '+'}
+                        </span>
+                      </button>
+                      {openSection === item.title && (
+                        <div className="p-6 pt-0 text-left font-inter text-[#3C3C3B]">
+                          <p className="mb-4">{item.content}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Section 5: Achievements (Stat Grid) */}
+                <h2 className="text-4xl font-oswald font-bold text-center text-[#003399] mb-10">{t.achievements}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                  <div className="bg-[#FFFFFF] p-6 rounded-lg shadow-md text-center border border-gray-200">
+                    <p className="text-4xl font-oswald font-bold text-[#D52B1E] mb-2">📊</p>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.gdpGrowth}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] p-6 rounded-lg shadow-md text-center border border-gray-200">
+                    <p className="text-4xl font-oswald font-bold text-[#D52B1E] mb-2">🏛️</p>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.firstMajorityParty}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] p-6 rounded-lg shadow-md text-center border border-gray-200">
+                    <p className="text-4xl font-oswald font-bold text-[#D52B1E] mb-2">🧱</p>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.infrastructureProjects}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] p-6 rounded-lg shadow-md text-center border border-gray-200">
+                    <p className="text-4xl font-oswald font-bold text-[#D52B1E] mb-2">🗺️</p>
+                    <p className="text-lg font-inter text-[#3C3C3B]">{t.regionalCoordination}</p>
+                  </div>
+                </div>
+
+                {/* Section 6: Today & Tomorrow */}
+                <h2 className="text-4xl font-oswald font-bold text-center text-[#003399] mb-10">{t.todayTomorrow}</h2>
+                <div className="bg-[#E6F0FA] p-8 rounded-lg shadow-md text-center max-w-4xl mx-auto border border-gray-200">
+                  <p className="text-xl font-inter text-[#3C3C3B] leading-relaxed mb-4">
+                    {t.todayTomorrowDesc}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer Quote Block */}
+              <div className="bg-[#003399] text-white py-10 text-center mt-12">
+                <p className="text-2xl font-oswald italic mb-4 leading-relaxed">
+                  {t.footerQuote}
+                </p>
+                <p className="text-lg font-inter opacity-80">
+                  {t.footerQuoteSource}
+                </p>
+              </div>
+            </div>
+          );
+        };
+
+
+        const TheIssuesPage = ({ t }) => {
+          const [openIssue, setOpenIssue] = useState(null);
+
+          const toggleIssue = (issueName) => {
+            setOpenIssue(openIssue === issueName ? null : issueName);
+          };
+
+          const issues = [
+            {
+              name: t.nationalSecurity,
+              description: t.nationalSecurityDescription,
+            },
+            {
+              name: t.economicDevelopment,
+              description: t.economicDevelopmentDescription,
+            },
+            {
+              name: t.socialPolicy,
+              description: t.socialPolicyDescription,
+            },
+            {
+              name: t.regionalDevelopment,
+              description: t.regionalDevelopmentDescription,
+            },
+            {
+              name: t.cultureAndTradition,
+              description: t.cultureAndTraditionDescription,
+            },
+            {
+              name: t.sovereigntyAndForeignPolicy,
+              description: t.sovereigntyAndForeignPolicyDescription,
+            },
+          ];
+
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              {/* Page Header Image */}
+              <section
+                className="relative bg-cover bg-center h-64 flex items-center justify-center"
+                style={{
+                  backgroundImage: `url('https://placehold.co/1200x256/003399/FFFFFF?text=The+Issues+Banner')`, // Banner for The Issues page
+                  backgroundAttachment: 'fixed',
+                }}
+              >
+                <div className="absolute inset-0 bg-black opacity-30"></div>
+              </section>
+
+              <div className="container mx-auto px-4 py-8 text-center">
+                <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.theIssuesPageTitle}</h1>
+                <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto mb-12">
+                  {t.theIssuesPageDescription}
+                </p>
+
+                <div className="max-w-3xl mx-auto">
+                  {issues.map((issue, index) => (
+                    <div key={index} className="bg-[#FFFFFF] rounded-lg shadow-md mb-4 overflow-hidden border border-gray-200">
+                      <button
+                        className="w-full flex justify-between items-center p-6 text-left font-oswald font-bold text-lg text-[#3C3C3B] hover:bg-gray-100 transition duration-200 focus:outline-none"
+                        onClick={() => toggleIssue(issue.name)}
+                      >
+                        {issue.name}
+                        <span className="text-[#003399] text-2xl">
+                          {openIssue === issue.name ? '-' : '+'}
+                        </span>
+                      </button>
+                      {openIssue === issue.name && (
+                        <div className="p-6 pt-0 text-left font-inter text-[#3C3C3B]">
+                          <p className="mb-4">{issue.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const ContactPage = ({ t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <ContentSection
+              title={t.contactHome}
+              description="Have questions or comments? Reach out to the United Russia Party."
+              t={t}
+            />
+            <div className="container mx-auto px-4 py-8 bg-[#FFFFFF] rounded-lg shadow-md p-8 max-w-2xl border border-gray-200">
+              <h3 className="2xl font-oswald font-bold text-[#3C3C3B] mb-6 text-center">{t.sendUsAMessage}</h3>
+              <form className="space-y-6 font-inter">
+                <div>
+                  <label htmlFor="contactName" className="block text-[#3C3C3B] text-sm font-bold mb-2">
+                    {t.yourName}
+                  </label>
+                  <input
+                    type="text"
+                    id="contactName"
+                    name="contactName"
+                    placeholder="John Doe"
+                    className="shadow appearance-none border rounded-full w-full py-3 px-4 text-[#3C3C3B] leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-[#003399]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-[#3C3C3B] text-sm font-bold mb-2">
+                    {t.yourEmailAddress}
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="john.doe@example.com"
+                    className="shadow appearance-none border rounded-full w-full py-3 px-4 text-[#3C3C3B] leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-[#003399]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="message" className="block text-[#3C3C3B] text-sm font-bold mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows="5"
+                    placeholder="Your message here..."
+                    className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-[#3C3C3B] leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-[#003399]"
+                    required
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  className="bg-[#D52B1E] hover:bg-[#b2201a] text-white font-bold py-3 px-8 rounded-full w-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                >
+                  {t.sendUsAMessage}
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+
+        const LeadershipPage = ({ setCurrentPage, t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            {/* Page Header Image */}
+            <section
+              className="relative bg-cover bg-center h-64 flex items-center justify-center"
+              style={{
+                backgroundImage: `url('https://placehold.co/1200x256/003399/FFFFFF?text=Leadership+Banner')`, // Placeholder image for Leadership page
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-30"></div>
+            </section>
+
+            <div className="container mx-auto px-4 py-8 text-center">
+              <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.leadershipPageTitle}</h1>
+              <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto mb-12">
+                {t.leadershipPageDescription}
+              </p>
+
+              {/* Section for Party Officers/Executive Committee - now clickable */}
+              <button
+                onClick={() => setCurrentPage('leadership-detail-page')} // Link to LeadershipDetail page
+                className="block w-full text-left bg-[#E6F0FA] border-l-4 border-[#003399] p-8 rounded-lg shadow-md max-w-3xl mx-auto mb-12 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#003399]"
+              >
+                <h2 className="text-2xl font-oswald font-bold text-[#003399] mb-4">{t.partyOfficers} <span className="ml-1">&raquo;</span></h2>
+                <p className="text-[#3C3C3B] font-inter">
+                  {t.partyOfficersDescription}
+                </p>
+              </button>
+
+              {/* Featured Leader/Group Section - now links to LeadershipDetail page */}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-5xl mx-auto bg-[#FFFFFF] p-8 rounded-lg shadow-md border border-gray-200">
+                <div className="md:w-1/2">
+                  <img
+                    src="https://placehold.co/600x400/CCCCCC/000000?text=Party+Leaders" // Placeholder image for leaders
+                    alt="Party Leaders"
+                    className="rounded-lg shadow-lg w-full h-auto"
+                  />
+                </div>
+                <div className="md:w-1/2 text-left">
+                  <p className="text-lg font-inter text-[#3C3C3B] mb-6">
+                    {t.featuredLeaderDescription}
+                  </p>
+                  <button
+                    onClick={() => setCurrentPage('leadership-detail-page')} // Link to new LeadershipDetail page
+                    className="bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                  >
+                    {t.meetTheTeam} <span className="ml-2">&raquo;</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+        // New LeadershipDetail Component
+        const LeadershipDetail = ({ t }) => {
+          const chairman = { name: "Vladimir Putin", role: "Chairman" };
+          const coChair = { name: "Dmitry Medvedev", role: "Co-Chair" }; // Example name
+          const treasurer = { name: "Anton Siluanov", role: "Treasurer" }; // Example name
+          const boardMembers = [
+            { name: "Sergei Shoigu", role: "Board Member" },
+            { name: "Sergey Lavrov", role: "Board Member" },
+            { name: "Mikhail Mishustin", role: "Board Member" },
+            { name: "Valentina Matviyenko", role: "Board Member" },
+            { name: "Vyacheslav Volodin", role: "Board Member" },
+            { name: "Elvira Nabiullina", role: "Board Member" },
+            { name: "Andrey Belousov", role: "Board Member" },
+            { name: "Tatiana Golikova", role: "Board Member" },
+            { name: "Sergey Sobyanin", role: "Board Member" },
+            { name: "Ramzan Kadyrov", role: "Board Member" },
+            { name: "Rustam Minnikhanov", role: "Board Member" },
+            { name: "Alexander Beglov", role: "Board Member" },
+          ];
+
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              <div className="container mx-auto px-4 py-8 text-center">
+                <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-12">{t.leadershipPageTitle}</h1>
+
+                {/* Chairman */}
+                <div className="mb-12">
+                  <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6">Chairman</h2>
+                  <div className="bg-[#FFFFFF] rounded-lg shadow-lg p-8 inline-block max-w-md border border-gray-200">
+                    <img
+                      src={`https://placehold.co/150x150/003399/FFFFFF?text=${chairman.name.split(' ').map(n => n[0]).join('')}`}
+                      alt={chairman.name}
+                      className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-[#E6F0FA]"
+                    />
+                    <h3 className="text-2xl font-oswald font-bold text-[#3C3C3B]">{chairman.name}</h3>
+                    <p className="text-[#003399] text-lg font-inter">{chairman.role}</p>
+                  </div>
+                </div>
+
+                {/* Co-Chair and Treasurer */}
+                <div className="flex flex-col md:flex-row justify-center gap-8 mb-12">
+                  <div className="bg-[#FFFFFF] rounded-lg shadow-lg p-8 max-w-md flex-1 border border-gray-200">
+                    <h2 className="text-3xl font-oswald font-bold text-[#003399] mb-6">Co-Chair</h2>
+                    <img
+                      src={`https://placehold.co/150x150/D52B1E/FFFFFF?text=${coChair.name.split(' ').map(n => n[0]).join('')}`}
+                      alt={coChair.name}
+                      className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-[#E6F0FA]"
+                    />
+                    <h3 className="text-2xl font-oswald font-bold text-[#3C3C3B]">{coChair.name}</h3>
+                    <p className="text-[#D52B1E] text-lg font-inter">{coChair.role}</p>
+                  </div>
+                  <div className="bg-[#FFFFFF] rounded-lg shadow-lg p-8 max-w-md flex-1 border border-gray-200">
+                    <h2 className="text-3xl font-oswald font-bold text-[#003399] mb-6">Treasurer</h2>
+                    <img
+                      src={`https://placehold.co/150x150/FFD700/000000?text=${treasurer.name.split(' ').map(n => n[0]).join('')}`}
+                      alt={treasurer.name}
+                      className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-[#E6F0FA]"
+                    />
+                    <h3 className="text-2xl font-oswald font-bold text-[#3C3C3B]">{treasurer.name}</h3>
+                    <p className="text-[#FFD700] text-lg font-inter">{treasurer.role}</p>
+                  </div>
+                </div>
+
+                {/* Board Members */}
+                <div className="mb-12">
+                  <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6">Board Members</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {boardMembers.map((member, index) => (
+                      <div key={index} className="bg-[#FFFFFF] rounded-lg shadow-md p-6 border border-gray-200">
+                        <img
+                          src={`https://placehold.co/100x100/003399/FFFFFF?text=${member.name.split(' ').map(n => n[0]).join('')}`}
+                          alt={member.name}
+                          className="w-24 h-24 rounded-full mx-auto mb-3 object-cover border-2 border-[#E6F0FA]"
+                        />
+                        <h3 className="text-xl font-oswald font-bold text-[#3C3C3B]">{member.name}</h3>
+                        <p className="text-[#3C3C3B] text-md font-inter">{member.role}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+
+        // New PartyPlatformPage component
+        const PartyPlatformPage = ({ t }) => {
+            const [currentPageNumber, setCurrentPageNumber] = useState(1);
+            const sectionRefs = useRef({});
+
+            const currentPageContent = partyPlatformPages[currentPageNumber - 1];
+
+            const navigateToSection = (id) => {
+                const sectionElement = sectionRefs.current[id];
+                if (sectionElement) {
+                    sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            const navigatePreviousPage = () => {
+                setCurrentPageNumber(prev => Math.max(1, prev - 1));
+                document.getElementById('platform-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            const navigateNextPage = () => {
+                setCurrentPageNumber(prev => Math.min(partyPlatformPages.length, prev + 1));
+                document.getElementById('platform-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            return (
+                <div className="pt-24 min-h-screen bg-[#FFFFFF] flex"> {/* Removed flex-row-reverse */}
+                    {/* Main Content Area */}
+                    <div className="flex-grow p-8 overflow-y-auto" style={{ marginRight: '25%' }}> {/* Added margin-right */}
+                        <div className="max-w-4xl mx-auto bg-[#FFFFFF] p-10 rounded-lg shadow-xl border border-gray-200" id="platform-top">
+                            <h1 className="text-5xl font-oswald font-extrabold text-center text-[#3C3C3B] mb-10">{t.partyPlatformPageTitle}</h1>
+
+                            {currentPageContent.map((chapter) => {
+                                if (chapter.sections) {
+                                    return (
+                                        <div key={chapter.title} className="mb-8">
+                                            <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6" id={chapter.title.replace(/\s+/g, '-').toLowerCase()} ref={el => sectionRefs.current[chapter.title.replace(/\s+/g, '-').toLowerCase()] = el}>{chapter.title}</h2>
+                                            {chapter.sections.map((section) => (
+                                                <div key={section.id} id={section.id} ref={el => sectionRefs.current[section.id] = el} className="mb-6 border-b border-gray-200 pb-4 last:border-b-0">
+                                                    <h3 className="text-2xl font-oswald font-semibold text-[#3C3C3B] mb-3">{section.title}</h3>
+                                                    {section.text.split('\n').map((line, lineIndex) => (
+                                                        <p key={lineIndex} className="text-lg font-inter text-[#3C3C3B] leading-relaxed mb-2">{line}</p>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div key={chapter.title} id={chapter.title.replace(/\s+/g, '-').toLowerCase()} ref={el => sectionRefs.current[chapter.title.replace(/\s+/g, '-').toLowerCase()] = el} className="mb-8 border-b border-gray-200 pb-4 last:border-b-0">
+                                            <h2 className="text-4xl font-oswald font-bold text-[#003399] mb-6">{chapter.title}</h2>
+                                            {chapter.text.split('\n').map((line, lineIndex) => (
+                                                <p key={lineIndex} className="text-lg font-inter text-[#3C3C3B] leading-relaxed mb-2">{line}</p>
+                                            ))}
+                                        </div>
+                                    );
+                                }
+                            })}
+
+                            {/* Bottom Navigation Arrows */}
+                            <div className="flex justify-between items-center mt-10">
+                                <button
+                                    onClick={navigatePreviousPage}
+                                    disabled={currentPageNumber === 1}
+                                    className={`bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out ${currentPageNumber === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    &larr; {t.previous}
+                                </button>
+                                <span className="text-lg font-inter text-[#3C3C3B]">
+                                    {t.section} {currentPageNumber} of {partyPlatformPages.length}
+                                </span>
+                                <button
+                                    onClick={navigateNextPage}
+                                    disabled={currentPageNumber === partyPlatformPages.length}
+                                    className={`bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out ${currentPageNumber === partyPlatformPages.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {t.next} &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Right Navigation Menu (Fixed) */}
+                    <div className="w-1/4 bg-[#E6F0FA] text-[#003399] p-6 fixed h-full overflow-y-auto pt-24 right-0 top-0 border-l border-gray-200">
+                        <h2 className="text-3xl font-oswald font-bold mb-6">{t.partyPlatformPageTitle}</h2>
+                        <nav>
+                            <ul>
+                                {Object.keys(partyPlatformContent).map((key) => {
+                                    const chapter = partyPlatformContent[key];
+                                    const chapterId = chapter.title.replace(/\s+/g, '-').toLowerCase();
+
+                                    return (
+                                        <li key={key} className="mb-4">
+                                            <a
+                                                href={`#${chapterId}`}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    let targetPage = 1;
+                                                    if (key === 'chapter2' || key === 'chapter3') {
+                                                        targetPage = 2;
+                                                    } else if (key === 'chapter4' || key === 'chapter5') {
+                                                        targetPage = 3;
+                                                    } else if (key === 'summary' || key === 'conclusion') {
+                                                        targetPage = 4;
+                                                    }
+                                                    setCurrentPageNumber(targetPage);
+                                                    setTimeout(() => navigateToSection(chapter.sections ? chapter.sections[0].id : chapterId), 0);
+                                                }}
+                                                className="text-xl font-oswald font-semibold hover:text-[#D52B1E] transition duration-300"
+                                            >
+                                                {chapter.title}
+                                            </a>
+                                            {chapter.sections && (
+                                                <ul className="ml-4 mt-2 space-y-1">
+                                                    {chapter.sections.map((section) => (
+                                                        <li key={section.id}>
+                                                            <a
+                                                                href={`#${section.id}`}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    let targetPage = 1;
+                                                                    if (section.id.startsWith('platform-chapter2') || section.id.startsWith('platform-chapter3')) {
+                                                                        targetPage = 2;
+                                                                    } else if (section.id.startsWith('platform-chapter4') || section.id.startsWith('platform-chapter5')) {
+                                                                        targetPage = 3;
+                                                                    }
+                                                                    setCurrentPageNumber(targetPage);
+                                                                    setTimeout(() => navigateToSection(section.id), 0);
+                                                                }}
+                                                                className="text-lg font-inter hover:text-[#D52B1E] transition duration-300 block"
+                                                            >
+                                                                {section.title}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </nav>
+                        <a href="#platform-top" className="text-[#003399] hover:underline mt-8 block font-inter" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>{t.backToTop}</a>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // Header component for navigation
+        const Header = ({ setCurrentPage, t, toggleLanguage, language }) => {
+          return (
+            <header className="bg-[#003399] shadow-sm fixed top-0 left-0 right-0 z-50 text-white">
+              <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+                {/* Logo and Party Name - Now clickable */}
+                <button
+                  onClick={() => setCurrentPage('home')}
+                  className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-[#FFD700] rounded-lg p-1 -ml-1"
+                >
+                  <img
+  src="/images/favicon.png"
+  alt="United Russia Logo"
+  className="w-10 h-10 rounded-full object-cover"
+/>
+
+                  <span className="text-xl font-oswald font-semibold text-white">{t.partyName}</span>
+                </button>
+
+                {/* Navigation Links */}
+                <nav className="hidden md:flex space-x-6">
+                  <NavLink onClick={() => setCurrentPage('who-we-are')}>{t.whoWeAre}</NavLink>
+                  <NavLink onClick={() => setCurrentPage('where-we-stand')}>{t.whereWeStand}</NavLink>
+                  <NavLink onClick={() => setCurrentPage('take-action')}>{t.takeAction}</NavLink>
+                  <NavLink onClick={() => setCurrentPage('shop')}>{t.shop}</NavLink>
+                </nav>
+
+                {/* Donate Button and Language Selector */}
+                <div className="flex items-center space-x-4">
+                  <a
+                    href="https://canary.discord.com/channels/894566680741703721/1186475117883166732/1391538853344448553"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#D52B1E] hover:bg-[#b2201a] text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+                  >
+                    {t.donate}
+                  </a>
+                  <button
+                    onClick={toggleLanguage}
+                    className="text-white hover:text-[#D52B1E] font-medium font-oswald uppercase"
+                  >
+                    {language === 'en' ? t.inRussian : t.inEnglish}
+                  </button>
+                </div>
+              </div>
+            </header>
+          );
+        };
+
+
+        // Main App component
+        const App = () => {
+          const [currentPage, setCurrentPage] = useState('home');
+          const [language, setLanguage] = useState('en'); // Default language is English
+
+          const t = translations[language]; // Get current language translations
+
+          // Function to render different pages based on the currentPage state
+          const renderPage = () => {
+            // Dynamically add routes for each project detail page
+            const projectPrefix = 'project-';
+            if (currentPage.startsWith(projectPrefix)) {
+              const projectId = currentPage.substring(projectPrefix.length);
+              const project = projectsData.find(p => p.id === projectId);
+              if (project) {
+                return <ProjectDetailPage project={project} t={t} />;
+              } else {
+                // If project not found, return home page or a 404 page
+                return <HomePage setCurrentPage={setCurrentPage} t={t} />;
+              }
+            }
+
+            // Handle region detail pages
+            const regionDetailPrefix = 'region-detail-';
+            if (currentPage.startsWith(regionDetailPrefix)) {
+              const regionName = currentPage.substring(regionDetailPrefix.length).replace(/-/g, ' ');
+              // Capitalize first letter of each word
+              const formattedRegionName = regionName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+              return <RegionDetailPage regionName={formattedRegionName} t={t} />;
+            }
+
+            switch (currentPage) {
+              case 'home':
+                return <HomePage setCurrentPage={setCurrentPage} t={t} />;
+              case 'who-we-are':
+                return <WhoWeArePage setCurrentPage={setCurrentPage} t={t} />;
+              case 'where-we-stand':
+                return <WhereWeStandPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'take-action':
+                return <TakeActionPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'shop':
+                return <ShopPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'party-charter-page': // New page route
+                return <PartyCharterPage t={t} />;
+              case 'leadership-page': // This page now directly renders LeadershipDetail
+                return <LeadershipDetail t={t} />;
+              case 'leadership-detail-page': // This page is now the target for 'leadership-page'
+                return <LeadershipDetail t={t} />;
+              case 'the-issues-page':
+                return <TheIssuesPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'contact-page':
+                return <ContactPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'party-platform-page':
+                return <PartyPlatformPage t={t} />;
+              case 'party-projects-page':
+                return <PartyProjectsPage setCurrentPage={setCurrentPage} t={t} />;
+              case 'what-we-do-page': // New page
+                return <WhatWeDoPage t={t} />;
+              case 'about-the-party-page': // New page
+                return <AboutThePartyPage t={t} />;
+              default:
+                return <HomePage setCurrentPage={setCurrentPage} t={t} />;
+            }
+          };
+
+          const toggleLanguage = () => {
+            setLanguage(prevLang => (prevLang === 'en' ? 'ru' : 'en'));
+          };
+
+          return (
+            <div className="font-inter antialiased text-[#3C3C3B]">
+              <Header setCurrentPage={setCurrentPage} t={t} toggleLanguage={toggleLanguage} language={language} />
+              {renderPage()}
+              <Footer t={t} />
+            </div>
+          );
+        };
+
+        // Individual Page Components (simplified for demonstration)
+        const HomePage = ({ setCurrentPage, t }) => (
+          <>
+            <HeroSection t={t} />
+
+              <section className="bg-[#FFFFFF] py-6 text-center">
+  <h2 className="text-3xl md:text-4xl font-oswald font-bold text-[#3C3C3B] mb-2">{t.learnMore}</h2>
+</section>
+
+            <section className="pt-2 pb-16 bg-[#FFFFFF]">
+              <div className="container mx-auto px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {/* Party Charter */}
+                  <ClickableCard
+                    image="/images/party charter.jpg"
+                    title={t.partyCharter}
+                    description={t.partyCharterDescription}
+                    buttonText={t.learnMore}
+                    onClick={() => setCurrentPage('party-charter-page')}
+                  />
+                  {/* Leadership */}
+                  <ClickableCard
+                    image="/images/leadership.jpg"
+                    title={t.leadershipHome}
+                    description={t.leadershipHomeDescription}
+                    onClick={() => setCurrentPage('leadership-detail-page')} // Link to LeadershipDetail page
+                    buttonText={t.learnMore}
+                  />
+                  {/* The Issues */}
+                  <ClickableCard
+                    image="/images/issues.jpg"
+                    title={t.theIssuesHome}
+                    description={t.theIssuesHomeDescription}
+                    buttonText={t.learnMore}
+                    onClick={() => setCurrentPage('the-issues-page')}
+                  />
+                  {/* Party Projects - Renamed from Contact */}
+                  <ClickableCard
+                    image="/images/projects.jpg"
+                    title={t.partyProjectsHome}
+                    description={t.partyProjectsHomeDescription}
+                    buttonText={t.learnMore}
+                    onClick={() => setCurrentPage('party-projects-page')}
+                  />
+                </div>
+              </div>
+            </section>
+          </>
+        );
+
+        const WhoWeArePage = ({ setCurrentPage, t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <section
+              className="relative bg-cover bg-center h-64 flex items-center justify-center"
+              style={{
+                backgroundImage: `url('/images/russian people page.avif')`, // Banner for Who We Are page
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-30"></div>
+            </section>
+
+            <div className="container mx-auto px-4 py-8 text-center">
+              <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.whoWeArePageTitle}</h1>
+              <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto mb-12">
+                {t.whoWeArePageDescription}
+              </p>
+
+              {/* Navigation for Who We Are sub-sections - now clickable buttons */}
+              <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-8 mb-12">
+                <button
+                  onClick={() => setCurrentPage('what-we-do-page')} // Link to new What We Do page
+                  className="text-[#003399] hover:text-[#D52B1E] font-oswald font-semibold text-lg border-l-2 border-[#003399] pl-4 text-left"
+                >
+                  {t.whatWeDo} <span className="ml-1">&raquo;</span>
+                </button>
+                <button
+                  onClick={() => setCurrentPage('about-the-party-page')} // Link to new About The Party page
+                  className="text-[#003399] hover:text-[#D52B1E] font-oswald font-semibold text-lg border-l-2 border-[#003399] pl-4 text-left"
+                >
+                  {t.aboutTheParty} <span className="ml-1">&raquo;</span>
+                </button>
+              </div>
+
+              {/* Our Leadership Section */}
+              <button
+                onClick={() => setCurrentPage('leadership-detail-page')} // Link to LeadershipDetail page
+                className="block w-full text-left bg-[#E6F0FA] border-l-4 border-[#003399] p-8 rounded-lg shadow-md max-w-3xl mx-auto mb-12 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#003399]"
+              >
+                <h2 className="text-2xl font-oswald font-bold text-[#003399] mb-4">{t.ourLeadership} <span className="ml-1">&raquo;</span></h2>
+                <p className="text-[#3C3C3B] font-inter">
+                  {t.leadershipDescription}
+                </p>
+              </button>
+
+              {/* Call to Action for Joining Team */}
+              <div className="bg-[#FFFFFF] p-8 rounded-lg shadow-md max-w-4xl mx-auto border border-gray-200">
+                <p className="text-xl font-inter text-[#3C3C3B] mb-4">
+                  {t.joinTeamCallToAction}
+                </p>
+                <button className="bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
+                  {t.openPositions} <span className="ml-2">&raquo;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+        const WhereWeStandPage = ({ setCurrentPage, t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <section
+              className="relative bg-cover bg-center h-64 flex items-center justify-center"
+              style={{
+                backgroundImage: `url('/images/army-where-we-stand-page.jpg')`, // Banner for Where We Stand page
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-30"></div>
+            </section>
+
+            <div className="container mx-auto px-4 py-8 text-center">
+              <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.whereWeStandPageTitle}</h1>
+              <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto mb-12">
+                {t.whereWeStandPageDescription}
+              </p>
+
+              {/* Party Platform Section - now clickable */}
+              <button
+                onClick={() => setCurrentPage('party-platform-page')}
+                className="block w-full text-left bg-[#E6F0FA] border-l-4 border-[#003399] p-8 rounded-lg shadow-md max-w-3xl mx-auto mb-12 hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#003399]"
+              >
+                <h2 className="text-2xl font-oswald font-bold text-[#003399] mb-4">{t.partyPlatform} <span className="ml-1">&raquo;</span></h2>
+                <p className="text-[#3C3C3B] font-inter">
+                  {t.partyPlatformDescription}
+                </p>
+              </button>
+
+              {/* Image and Text Block */}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-5xl mx-auto bg-[#FFFFFF] p-8 rounded-lg shadow-md border border-gray-200">
+                <div className="md:w-1/2">
+                  <img
+                    src="/images/peoples-issues.jpg" // Placeholder image
+                    alt="United Russia Supporters"
+                    className="rounded-lg shadow-lg w-full h-auto"
+                  />
+                </div>
+                <div className="md:w-1/2 text-left">
+                  <p className="text-lg font-inter text-[#3C3C3B] mb-6">
+                    {t.economyDescription}
+                  </p>
+                  <button
+                    onClick={() => setCurrentPage('the-issues-page')} // Make this button navigate to TheIssuesPage
+                    className="bg-[#003399] hover:bg-[#D52B1E] text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
+                  >
+                    {t.theIssues} <span className="ml-2">&raquo;</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+        // New ActionBlock component to match the screenshot's design
+const ActionBlock = ({ icon, title, description, buttons }) => (
+  <div className="flex items-start md:items-center flex-col md:flex-row bg-[#FFFFFF] p-6 rounded-lg shadow-md mb-8 max-w-4xl mx-auto border border-gray-200">
+    
+    {/* Circle icon container with image inside */}
+    <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden mb-4 md:mb-0 md:mr-6">
+      <img src={icon} alt="Action Icon" className="w-full h-full object-cover" />
+    </div>
+
+    {/* Text and button section */}
+    <div className="flex-grow text-left">
+      <h3 className="2xl font-oswald font-bold text-[#3C3C3B] mb-2">{title}</h3>
+      <p className="text-[#3C3C3B] font-inter mb-4">{description}</p>
+      <div className="flex flex-wrap gap-3">
+        {buttons.map((button, index) => (
+          <a
+            key={index}
+            href={button.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-[#FFFFFF] border-2 border-[#003399] text-[#003399] hover:bg-[#003399] hover:text-white font-bold py-2 px-6 rounded-full shadow-sm transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            {button.text} <span className="ml-1">&raquo;</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+  </div>
+);
+        const TakeActionPage = ({ setCurrentPage, t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <section
+              className="relative bg-cover bg-center h-64 flex items-center justify-center"
+              style={{
+                backgroundImage: `url('/images/get involved page 3.jpg')`, // Banner for Take Action page
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <div className="absolute inset-0 bg-black opacity-30"></div>
+            </section>
+
+            <div className="container mx-auto px-4 py-8 text-center">
+              <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">{t.getInvolved}</h1>
+              <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto mb-12">
+                {t.getInvolvedDescription}
+              </p>
+
+              {/* Attend the Party Congress */}
+              <ActionBlock
+                icon="/images/UR icon 1.jpg" // Placeholder image for icon
+                title={t.attendCongress}
+                description={t.attendCongressDescription}
+                buttons={[{ text: "Party Congress", link: "https://canary.discord.com/channels/894566680741703721/1385725581072666765" }]}
+              />
+
+              {/* Help Campaign */}
+              <ActionBlock
+                icon="/images/help campaign icon.jpg" // Placeholder image for icon
+                title={t.helpCampaign}
+                description={t.helpCampaignDescription}
+                buttons={[{ text: "Help Today", link: "https://canary.discord.com/channels/894566680741703721/1136920575592370196/1391539567798124745" }]}
+              />
+            </div>
+          </div>
+        );
+
+        const ShopPage = ({ setCurrentPage, t }) => (
+          <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+            <ContentSection
+              title={t.shopPageTitle}
+              description={t.shopPageDescription}
+              t={t}
+            />
+            <div className="container mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <ProductCard
+                name={t.tShirt}
+                price="999 ₽"
+                imageUrl="https://placehold.co/300x300/CCCCCC/000000?text=T-Shirt"
+                t={t}
+              />
+              <ProductCard
+                name={t.mug}
+                price="499 ₽"
+                imageUrl="https://placehold.co/300x300/CCCCCC/000000?text=Mug"
+                t={t}
+              />
+              <ProductCard
+                name={t.pin}
+                price="199 ₽"
+                imageUrl="https://placehold.co/300x300/CCCCCC/000000?text=Pin"
+                t={t}
+              />
+            </div>
+          </div>
+        );
+
+        const ProductCard = ({ name, price, imageUrl, t }) => (
+          <div className="bg-[#FFFFFF] rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300 ease-in-out border border-gray-200">
+            <img src={imageUrl} alt={name} className="w-full h-48 object-cover" />
+            <div className="p-4">
+              <h3 className="text-lg font-oswald font-semibold text-[#3C3C3B] mb-2">{name}</h3>
+              <p className="text-[#003399] font-bold text-xl mb-4 font-inter">{price}</p>
+              <button className="bg-[#D52B1E] hover:bg-[#b2201a] text-white font-bold py-2 px-4 rounded-full w-full transition duration-300 ease-in-out shadow-lg">
+                {t.buy}
+              </button>
+            </div>
+          </div>
+        );
+
+        // RegionDetailPage component
+        const RegionDetailPage = ({ regionName, t }) => {
+          const projectCount = customRegionProjectCounts[regionName] || 0; // Use customRegionProjectCounts
+          return (
+            <div className="pt-24 min-h-screen bg-[#FFFFFF]">
+              <div className="container mx-auto px-4 py-8 text-center">
+                <h1 className="text-5xl font-oswald font-extrabold text-[#3C3C3B] mb-6">
+                  {regionName}
+                </h1>
+                <p className="text-lg font-inter text-[#3C3C3B] leading-relaxed max-w-4xl mx-auto">
+                  {t.regionProjects.replace('{regionName}', regionName).replace('{projectCount}', projectCount)}
+                </p>
+              </div>
+            </div>
+          );
+        };
+
+        // Use createRoot instead of ReactDOM.render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
