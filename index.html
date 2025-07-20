@@ -32,12 +32,6 @@
             display: none; /* Hidden by default, shown on hover */
         }
         /* Ensure the map container takes up available space */
-        #map-container-parent {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100%;
-        }
         #map-svg-container {
             flex-grow: 1; /* Allows the map to take available vertical space */
             width: 100%;
@@ -51,6 +45,234 @@
             height: 100%;
             display: block;
         }
+
+        /* Custom CSS for SVG regions (from interactive map.txt) */
+        /* Styling for actual region paths (map view) */
+        .region-path {
+            fill: #3b82f6; /* Default blue fill for regions (Tailwind blue-500) */
+            stroke: #ffffff; /* White border */
+            stroke-width: 0.5px; /* Thinner border for individual regions */
+            transition: fill 0.2s ease-in-out; /* Smooth transition for hover */
+            cursor: pointer;
+        }
+        .region-path.highlighted {
+            fill: #ef4444; /* Red fill when highlighted (Tailwind red-500) */
+            stroke: #dc2626; /* Darker red border on highlight (Tailwind red-600) */
+            stroke-width: 1.5px; /* Thicker border for highlighted */
+        }
+
+        /* Custom scrollbar for the regions/projects list */
+        .list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .list-container::-webkit-scrollbar-track {
+            background: #e2e8f0; /* Tailwind gray-200 */
+            border-radius: 4px;
+        }
+        .list-container::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* Tailwind slate-400 */
+            border-radius: 4px;
+        }
+        .list-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* Tailwind slate-500 */
+        }
+        .list-item-highlight {
+            background-color: #e0f2fe; /* Light blue background for highlighted list item */
+            font-weight: bold;
+        }
+
+        /* Accent color for icons/bullets */
+        .accent-icon {
+            color: #ff9933; /* Warm orange */
+        }
+
+        /* Section divider */
+        .section-divider {
+            border-bottom: 1px solid #e0e0e0; /* Light gray line */
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        /* Project Detail View Specific Styles */
+        .project-detail-sidebar {
+            position: sticky;
+            top: 0;
+            align-self: flex-start; /* Ensures it sticks to the top of its flex container */
+            height: 100%; /* Make it take full height of its parent */
+            overflow-y: auto; /* Allow scrolling if content overflows */
+            /* Glassmorphism styles - these will always apply to project detail sidebar */
+            background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            /* Ensure it has a background color to be visible */
+            background-color: #f8fafc; /* Tailwind slate-50, a very light gray, for visibility */
+        }
+
+        .project-detail-sidebar a {
+            position: relative;
+            overflow: hidden;
+            color: #333333; /* Default text color for sidebar links */
+        }
+        .project-detail-sidebar a:hover {
+            color: #ff9933; /* Warm orange on hover for sidebar links */
+            text-shadow: 0 0 5px #ff9933;
+        }
+        .project-detail-sidebar a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 153, 51, 0.3), transparent); /* Neon glow effect with orange */
+            transition: left 0.5s ease;
+        }
+        .project-detail-sidebar a:hover::before {
+            left: 100%;
+        }
+
+        .project-detail-content {
+            overflow-y: auto; /* Allow scrolling for main content */
+            height: 100%; /* Take full height of its parent */
+            scroll-behavior: smooth; /* Smooth scrolling for anchor links */
+        }
+        .project-detail-content section {
+            padding-top: 2rem; /* Consistent padding for sections */
+            padding-bottom: 2rem;
+        }
+
+        /* Hero Banner specific styles */
+        .hero-banner {
+            background-color: #003366; /* Deep blue background */
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 1rem; /* Space between elements */
+        }
+        .hero-banner h1 {
+            color: white; /* Override heading color for banner */
+            font-size: 2.5rem; /* Larger font size */
+            margin-bottom: 0.5rem;
+        }
+        .hero-banner p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            max-width: 400px;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .hero-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .hero-stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff9933; /* Accent color */
+        }
+        .hero-stat-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .project-carousel-box {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            min-width: 200px;
+        }
+        .project-carousel-box:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .project-carousel-box .arrow-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+        .project-carousel-box .arrow-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .project-carousel-icon {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        .project-carousel-name {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        /* New styles for project cards below the map */
+        .map-project-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            width: 220px; /* Fixed width for consistency */
+            height: 180px; /* Fixed height for consistency */
+            position: relative; /* For absolute positioning of icon/regions */
+            overflow: hidden; /* Hide overflow from icon */
+        }
+        .map-project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .map-project-card-title {
+            font-size: 1.5rem; /* Larger title */
+            font-weight: bold;
+            color: #003366; /* Deep blue */
+            margin-bottom: 0.5rem;
+            text-align: left;
+            z-index: 1; /* Ensure text is above icon */
+        }
+        .map-project-card-regions {
+            background-color: #e0f2fe; /* Light blue tag */
+            color: #003366; /* Dark blue text */
+            padding: 0.3rem 0.75rem;
+            border-radius: 9999px; /* Fully rounded */
+            font-size: 0.8rem;
+            font-weight: 600;
+            align-self: flex-start; /* Align to bottom-left */
+            z-index: 1;
+        }
+        .map-project-card-icon {
+            position: absolute;
+            bottom: -10px; /* Adjust as needed */
+            right: -10px; /* Adjust as needed */
+            font-size: 6rem; /* Large icon */
+            color: rgba(0, 51, 102, 0.1); /* Very light deep blue for background effect */
+            z-index: 0; /* Send to back */
+            line-height: 1; /* Prevent extra space */
+        }
     </style>
 </head>
 <body class="bg-[#FFFFFF] text-[#3C3C3B]">
@@ -63,6 +285,8 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- D3.js CDN for map visualization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <!-- TopoJSON library for map data processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 
     <!-- Your main application script, type="text/babel" is crucial for in-browser JSX compilation -->
     <script type="text/babel" src="./src/index.js"></script>

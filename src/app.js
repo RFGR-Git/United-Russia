@@ -1,6 +1,10 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
+
+// Import components
 import Header from './components/Header.js';
 import Footer from './components/Footer.js';
+
+// Import pages
 import HomePage from './pages/HomePage.js';
 import WhoWeArePage from './pages/WhoWeArePage.js';
 import WhereWeStandPage from './pages/WhereWeStandPage.js';
@@ -8,77 +12,103 @@ import ShopPage from './pages/ShopPage.js';
 import PartyCharterPage from './pages/PartyCharterPage.js';
 import PartyPlatformPage from './pages/PartyPlatformPage.js';
 import LeadershipPage from './pages/LeadershipPage.js';
-import PartyProjectsPage from './pages/PartyProjectsPage.js';
+import LeadershipDetail from './pages/LeadershipDetail.js';
+import PartyProjectsPage from './pages/PartyProjectsPage.js'; // This is the main one we're updating
 import ContactPage from './pages/ContactPage.js';
-import RegionDetailPage from './pages/RegionDetailPage.js';
+import TakeActionPage from './pages/TakeActionPage.js';
+import TheIssuesPage from './pages/TheIssuesPage.js';
+import WhatWeDoPage from './pages/WhatWeDoPage.js';
+import AboutThePartyPage from './pages/OurPartyPage.js';
+import RegionDetailPage from './pages/RegionDetailPage.js'; // Still needed for map region clicks
 
 // Import data
 import { translations } from './data/translations.js';
 import { partyCharterContent, partyCharterPages } from './data/partyCharterContent.js';
-import { partyPlatformContent } from './data/partyPlatformContent.js';
+import { partyPlatformContent, partyPlatformPages } from './data/partyPlatformContent.js';
+// projectsData and projectDetails are now handled internally by PartyProjectsPage,
+// but RegionDetailPage still needs customRegionProjectCounts if it's used there.
+// For now, PartyProjectsPage will pass the necessary data to RegionDetailPage.
 
-// Create Translation Context
+// Create Translation Context to provide translations to all components
 export const TranslationContext = createContext();
 
 const App = () => {
-  const [language, setLanguage] = useState('en');
+  // State for current page and language
   const [currentPage, setCurrentPage] = useState('home');
-  const [selectedRegion, setSelectedRegion] = useState(null); // State for selected region
+  const [language, setLanguage] = useState('en'); // Default language is English
 
-  // Custom project counts for regions (from your original code)
-  const customRegionProjectCounts = {
-    "MOSCOW": 25,
-    "SAINT PETERSBURG": 18,
-    "NOVOSIBIRSK OBLAST": 12,
-    "SVERDLOVSK OBLAST": 15,
-    "TATARSTAN": 20,
-    "KRASNODAR KRAI": 10,
-    "NIZHNY NOVGOROD OBLAST": 8,
-    "ROSTOV OBLAST": 14,
-    "BASHKORTOSTAN": 17,
-    "CHECHEN REPUBLIC": 5
-  };
-
+  // Get current language translations based on the language state
   const t = translations[language];
 
-  // Simple routing logic based on currentPage state
+  // Function to toggle language between English and Russian
+  const toggleLanguage = () => {
+    setLanguage(prevLang => (prevLang === 'en' ? 'ru' : 'en'));
+  };
+
+  // Function to render different pages based on the currentPage state
   const renderPage = () => {
+    // Handle dynamic routing for region detail pages (from map clicks)
+    const regionDetailPrefix = 'region-detail-';
+    if (currentPage.startsWith(regionDetailPrefix)) {
+      const regionName = currentPage.substring(regionDetailPrefix.length).replace(/-/g, ' ');
+      // Capitalize first letter of each word for display
+      const formattedRegionName = regionName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      // RegionDetailPage will now use the projectsPerFederalSubject from PartyProjectsPage's context or shared data
+      // For simplicity, we'll pass a dummy count here, or you can enhance RegionDetailPage to fetch its own data.
+      // For now, let's assume RegionDetailPage will get its project count via a more robust method or from a global state/context if needed.
+      // For this example, we'll just pass the name.
+      return <RegionDetailPage regionName={formattedRegionName} t={t} />;
+    }
+
+    // Standard page routing
     switch (currentPage) {
       case 'home':
-        return <HomePage t={t} setCurrentPage={setCurrentPage} />;
+        return <HomePage setCurrentPage={setCurrentPage} t={t} />;
       case 'who-we-are':
-        return <WhoWeArePage t={t} setCurrentPage={setCurrentPage} />;
+        return <WhoWeArePage setCurrentPage={setCurrentPage} t={t} />;
       case 'where-we-stand':
-        return <WhereWeStandPage t={t} setCurrentPage={setCurrentPage} />;
+        return <WhereWeStandPage setCurrentPage={setCurrentPage} t={t} />;
+      case 'take-action':
+        return <TakeActionPage setCurrentPage={setCurrentPage} t={t} />;
       case 'shop':
-        return <ShopPage t={t} />;
-      case 'party-charter':
+        return <ShopPage setCurrentPage={setCurrentPage} t={t} />;
+      case 'party-charter-page':
         return <PartyCharterPage t={t} partyCharterContent={partyCharterContent} partyCharterPages={partyCharterPages} />;
-      case 'party-platform':
-        return <PartyPlatformPage t={t} partyPlatformContent={partyPlatformContent} />;
-      case 'leadership':
-        return <LeadershipPage t={t} />;
-      case 'party-projects':
-        return <PartyProjectsPage t={t} setCurrentPage={setCurrentPage} setSelectedRegion={setSelectedRegion} customRegionProjectCounts={customRegionProjectCounts} />;
-      case 'contact':
+      case 'leadership-page':
+        return <LeadershipPage setCurrentPage={setCurrentPage} t={t} />;
+      case 'leadership-detail-page':
+        return <LeadershipDetail t={t} />;
+      case 'the-issues-page':
+        return <TheIssuesPage t={t} />;
+      case 'contact-page':
         return <ContactPage t={t} />;
-      case 'region-detail':
-        return <RegionDetailPage t={t} regionName={selectedRegion} customRegionProjectCounts={customRegionProjectCounts} />;
-      case 'our-party':
-        return <OurPartyPage t={t} />;
+      case 'party-platform-page':
+        return <PartyPlatformPage t={t} partyPlatformContent={partyPlatformContent} partyPlatformPages={partyPlatformPages} />;
+      case 'party-projects-page':
+        // PartyProjectsPage now handles its own internal project detail view
+        return <PartyProjectsPage setCurrentPage={setCurrentPage} t={t} />;
+      case 'what-we-do-page':
+        return <WhatWeDoPage t={t} />;
+      case 'about-the-party-page':
+        return <AboutThePartyPage t={t} />;
       default:
-        return <HomePage t={t} setCurrentPage={setCurrentPage} />;
+        // Default to home page if route is not found
+        return <HomePage setCurrentPage={setCurrentPage} t={t} />;
     }
   };
 
   return (
+    // Provide translations to all child components via context
     <TranslationContext.Provider value={t}>
-      <div className="min-h-screen flex flex-col">
-        <Header t={t} language={language} setLanguage={setLanguage} setCurrentPage={setCurrentPage} />
+      <div className="font-inter antialiased text-[#3C3C3B]">
+        {/* Header component with navigation and language toggle */}
+        <Header setCurrentPage={setCurrentPage} t={t} toggleLanguage={toggleLanguage} language={language} />
+        {/* Main content area where pages are rendered */}
         <main className="flex-grow">
           {renderPage()}
         </main>
-        <Footer t={t} setCurrentPage={setCurrentPage} />
+        {/* Footer component */}
+        <Footer t={t} />
       </div>
     </TranslationContext.Provider>
   );
