@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>United Russia Party</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Oswald (for headings) and Inter (for body text) -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles for the body and headings */
+        body {
+            font-family: 'Inter', sans-serif; /* Default body font */
+            background-color: #FFFFFF; /* True White */
+            color: #3C3C3B; /* Charcoal Gray */
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Oswald', sans-serif; /* Headings font */
+            text-transform: uppercase;
+        }
+        /* Custom styles for map tooltip */
+        .map-tooltip {
+            position: absolute;
+            background-color: black;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.875rem; /* text-sm */
+            z-index: 1000;
+            pointer-events: none; /* Allows mouse events to pass through to the map */
+            display: none; /* Hidden by default, shown on hover */
+        }
+        /* Ensure the map container takes up available space */
+        #map-container-parent {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+        #map-svg-container {
+            flex-grow: 1; /* Allows the map to take available vertical space */
+            width: 100%;
+            height: 100%;
+            display: flex; /* Use flex to center SVG if it doesn't fill */
+            justify-content: center;
+            align-items: center;
+        }
+        #map-svg-container svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-[#FFFFFF] text-[#3C3C3B]">
+    <div id="root"></div>
+
+    <!-- React and ReactDOM CDNs -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- D3.js CDN for map visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+    <!-- Your main application script, type="text/babel" is crucial for in-browser JSX compilation -->
+    <script type="text/babel" src="./src/index.js"></script>
+</body>
+</html>
