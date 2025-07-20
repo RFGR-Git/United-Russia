@@ -25,9 +25,6 @@ import RegionDetailPage from './pages/RegionDetailPage.js'; // Still needed for 
 import { translations } from './data/translations.js';
 import { partyCharterContent, partyCharterPages } from './data/partyCharterContent.js';
 import { partyPlatformContent, partyPlatformPages } from './data/partyPlatformContent.js';
-// projectsData and projectDetails are now handled internally by PartyProjectsPage,
-// but RegionDetailPage still needs customRegionProjectCounts if it's used there.
-// For now, PartyProjectsPage will pass the necessary data to RegionDetailPage.
 
 // Create Translation Context to provide translations to all components
 export const TranslationContext = createContext();
@@ -55,7 +52,6 @@ const App = () => {
       const formattedRegionName = regionName.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
       // RegionDetailPage will now use the projectsPerFederalSubject from PartyProjectsPage's context or shared data
       // For simplicity, we'll pass a dummy count here, or you can enhance RegionDetailPage to fetch its own data.
-      // For now, let's assume RegionDetailPage will get its project count via a more robust method or from a global state/context if needed.
       // For this example, we'll just pass the name.
       return <RegionDetailPage regionName={formattedRegionName} t={t} />;
     }
